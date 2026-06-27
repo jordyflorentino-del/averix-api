@@ -1,4 +1,3 @@
-const http = require("http");
 const https = require("https");
 
 const CAMP_MAP = {
@@ -35,12 +34,12 @@ const CAMP_MAP = {
   "video branding 26":                       { cuenta: "emk", canal: "Meta" },
 };
 
-function hsPost(path, body, token) {
+function hsPost(body, token) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(body);
     const req = https.request({
       hostname: "api.hubapi.com",
-      path,
+      path: "/crm/v3/objects/contacts/search",
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -58,28 +57,20 @@ function hsPost(path, body, token) {
   });
 }
 
-const server = http.createServer(async (req, res) => {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  if (req.method === "OPTIONS") {
-    res.writeHead(204); res.end(); return;
+  if (req.method === "OPTIONS") { res.status(204).end(); return; }
+
+  const { fi, ff } = req.query;
+  if (!fi || !ff) {
+    return res.status(400).json({ error: "Parámetros fi y ff requeridos (YYYY-MM-DD)" });
   }
 
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const fi = url.searchParams.get("fi");
-  const ff = url.searchParams.get("ff");
-
-  const json = (code, obj) => {
-    res.writeHead(code, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(obj));
-  };
-
-  if (!fi || !ff) return json(400, { error: "Parámetros fi y ff requeridos (YYYY-MM-DD)" });
-
   const TOKEN = process.env.HUBSPOT_TOKEN;
-  if (!TOKEN) return json(500, { error: "HUBSPOT_TOKEN no configurado" });
+  if (!TOKEN) return res.status(500).json({ error: "HUBSPOT_TOKEN no configurado" });
 
   const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
   const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
@@ -105,11 +96,8 @@ const server = http.createServer(async (req, res) => {
         ...(after ? { after } : {}),
       };
 
-      const { status, body: data } = await hsPost(
-        "/crm/v3/objects/contacts/search", body, TOKEN
-      );
-
-      if (status !== 200) return json(status, { error: data });
+      const { status, body: data } = await hsPost(body, TOKEN);
+      if (status !== 200) return res.status(status).json({ error: data });
 
       for (const c of data.results ?? []) {
         const raw = c.properties?.hs_latest_source_data_2;
@@ -124,11 +112,8 @@ const server = http.createServer(async (req, res) => {
       after = data.paging?.next?.after;
     } while (after);
 
-    json(200, resultado);
+    return res.status(200).json(resultado);
   } catch (err) {
-    json(500, { error: err.message });
+    return res.status(500).json({ error: err.message });
   }
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`API corriendo en puerto ${PORT}`));
+};
