@@ -84,15 +84,20 @@ const META_CAMP_CUENTA = {
 // ── Consultar Meta Ads API ──
 async function getMetaLeads(fi, ff, token, adAccountId) {
   const resultado = { averix: 0, emk: 0, detalle: {} };
-  const fields = "name,leads,account_id,account_name";
-  const url = `https://graph.facebook.com/v19.0/act_${adAccountId}/campaigns?fields=${fields}&time_range={"since":"${fi}","until":"${ff}"}&access_token=${token}&limit=100`;
+  const fields = `name,insights.time_range({"since":"${fi}","until":"${ff}"}){actions,campaign_name}`;
+  const url = `https://graph.facebook.com/v19.0/act_${adAccountId}/campaigns?fields=${encodeURIComponent(fields)}&access_token=${token}&limit=100`;
 
   const { status, body } = await httpsGet(url);
   if (status !== 200) throw new Error(`Meta API ${status}: ${JSON.stringify(body)}`);
 
   for (const camp of body.data || []) {
-    const leads = camp.leads || 0;
     const name = camp.name || "";
+    // Extraer leads de actions
+    const actions = camp.insights?.data?.[0]?.actions || [];
+    const leadAction = actions.find(a =>
+      a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped"
+    );
+    const leads = parseInt(leadAction?.value || 0);
     resultado.detalle[name] = leads;
 
     // Buscar cuenta por nombre de campaña
@@ -109,8 +114,12 @@ async function getMetaLeads(fi, ff, token, adAccountId) {
   while (next) {
     const { body: page } = await httpsGet(next);
     for (const camp of page.data || []) {
-      const leads = camp.leads || 0;
       const name = camp.name || "";
+      const actions = camp.insights?.data?.[0]?.actions || [];
+      const leadAction = actions.find(a =>
+        a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped"
+      );
+      const leads = parseInt(leadAction?.value || 0);
       resultado.detalle[name] = leads;
       const cuenta = Object.entries(META_CAMP_CUENTA).find(([k]) =>
         name.toLowerCase().includes(k.toLowerCase())
