@@ -181,37 +181,45 @@ module.exports = async function handler(req, res) {
 
   const META_TOKEN = process.env.META_TOKEN;
   const HS_TOKEN   = process.env.HUBSPOT_TOKEN;
-  const AD_ACCOUNT = "1999778244105005";
+  const AD_AVERIX  = "1999778244105005";
+  const AD_EMK     = "423996390009898";
 
   const resultado = {
-    averix: { Meta: 0, Google: 0, LinkedIn: 0 },
-    emk:    { Meta: 0, Google: 0, TikTok: 0 },
+    averix: { Meta: {}, Google: 0, LinkedIn: 0 },
+    emk:    { Meta: {}, Google: 0, TikTok: 0 },
     fuente: {},
-    detalle: {},
   };
 
   try {
-    // 1. Meta Ads API → leads exactos por campaña
     if (META_TOKEN) {
-      const meta = await getMetaLeads(fi, ff, META_TOKEN, AD_ACCOUNT);
-      resultado.averix.Meta = meta.averix;
-      resultado.emk.Meta    = meta.emk;
-      resultado.detalle     = meta.detalle;
-      resultado.fuente.meta = "Meta Ads API ✅";
+      // Averix
+      const metaAv = await getMetaLeads(fi, ff, META_TOKEN, AD_AVERIX);
+      resultado.averix.Meta = metaAv.detalle;
+      resultado.fuente.meta_averix = `Meta Ads Averix ✅ (${metaAv.averix} leads)`;
+
+      // e-Markeed
+      const metaEm = await getMetaLeads(fi, ff, META_TOKEN, AD_EMK);
+      resultado.emk.Meta = metaEm.detalle;
+      resultado.fuente.meta_emk = `Meta Ads e-Markeed ✅ (${metaEm.emk} leads)`;
     } else {
       resultado.fuente.meta = "META_TOKEN no configurado ⚠️";
     }
 
-    // 2. HubSpot → leads de Google Ads
     if (HS_TOKEN) {
       resultado.averix.Google = await getGoogleLeads(fi, ff, HS_TOKEN);
       resultado.fuente.google = "HubSpot CRM ✅";
-    } else {
-      resultado.fuente.google = "HUBSPOT_TOKEN no configurado ⚠️";
     }
+
+    // Totales
+    const totalAvMeta = Object.values(resultado.averix.Meta).reduce((a,b)=>a+b,0);
+    const totalEmMeta = Object.values(resultado.emk.Meta).reduce((a,b)=>a+b,0);
+    resultado.totales = {
+      averix: { Meta: totalAvMeta, Google: resultado.averix.Google },
+      emk:    { Meta: totalEmMeta, Google: 0 },
+    };
 
     return res.status(200).json(resultado);
   } catch (err) {
-    return res.status(500).json({ error: err.message, stack: err.stack });
+    return res.status(500).json({ error: err.message });
   }
 };
