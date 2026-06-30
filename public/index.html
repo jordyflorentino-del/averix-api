@@ -619,13 +619,34 @@ function canalBadge(c){
   return `<span class="badge-li">${c}</span>`;
 }
 
+function statusBadge(status){
+  if(!status) return "";
+  const map = {
+    ACTIVE:    {label:"Activa",   color:"#2C8A5B", bg:"#E6F4ED"},
+    PAUSED:    {label:"Pausada",  color:"#92400e", bg:"#FFFBEB"},
+    DELETED:   {label:"Eliminada",color:"#991b1b", bg:"#FEF2F2"},
+    ARCHIVED:  {label:"Archivada",color:"#6B7280", bg:"#F2F3F7"},
+    CAMPAIGN_PAUSED: {label:"Pausada", color:"#92400e", bg:"#FFFBEB"},
+  };
+  const s = map[status] || {label:status, color:"#6B7280", bg:"#F2F3F7"};
+  return `<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;color:${s.color};background:${s.bg};">${s.label}</span>`;
+}
+
+function canalBadge(c){
+  if(c==="Meta")    return '<span class="badge-meta">Meta</span>';
+  if(c==="Google")  return '<span class="badge-google">Google</span>';
+  if(c==="LinkedIn")return '<span class="badge-li">LinkedIn</span>';
+  return `<span class="badge-li">${c}</span>`;
+}
+
 function buildTable(key){
   const tbody=document.querySelector(key==="averix"?"#tblAverix tbody":"#tblEmk tbody");
   tbody.innerHTML="";
   data[key].forEach((row,i)=>{
     const tr=document.createElement("tr");
+    const badge = row.esCampaña ? statusBadge(row.status) : canalBadge(row.canal);
     tr.innerHTML=`
-      <td class="label">${row.canal}${canalBadge(row.canal)}</td>
+      <td class="label">${row.canal}${badge}</td>
       <td style="color:var(--gold);font-weight:600;">${fmtMXN(row.pres)}</td>
       <td><input class="inv" type="number" min="0" step="0.01" value="${row.gasto}" data-key="${key}" data-i="${i}" data-f="gasto" placeholder="0.00"></td>
       <td class="hs">${row.leads}</td>
