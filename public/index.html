@@ -557,27 +557,22 @@ async function sincronizar(){
     const d = await resp.json();
     if(d.error) throw new Error(d.error);
 
+    // d.averix.Meta y d.emk.Meta ahora son objetos: {nombre: {leads, spend, status}}
     const avMetaCamps = Object.entries(d.averix?.Meta||{})
-      .filter(([,v])=>v>0)
-      .map(([nombre,leadsN])=>({
+      .filter(([,v])=>v.leads>0 || v.spend>0)
+      .map(([nombre,v])=>({
         canal:nombre, color:"#A8336E",
-        pres:0, gasto:0, leads:leadsN, neg:0, cierres:0, esCampaña:true
+        pres:v.spend||0, gasto:v.spend||0, leads:v.leads||0,
+        neg:0, cierres:0, esCampaña:true, status:v.status
       }));
 
     const emMetaCamps = Object.entries(d.emk?.Meta||{})
-      .filter(([,v])=>v>0)
-      .map(([nombre,leadsN])=>({
+      .filter(([,v])=>v.leads>0 || v.spend>0)
+      .map(([nombre,v])=>({
         canal:nombre, color:"#A8336E",
-        pres:0, gasto:0, leads:leadsN, neg:0, cierres:0, esCampaña:true
+        pres:v.spend||0, gasto:v.spend||0, leads:v.leads||0,
+        neg:0, cierres:0, esCampaña:true, status:v.status
       }));
-
-    const presMetaAv=budget.averix.find(b=>b.canal==="Meta")?.pres||0;
-    const totalLeadsMetaAv=avMetaCamps.reduce((s,c)=>s+c.leads,0)||1;
-    avMetaCamps.forEach(c=>{ c.pres=Math.round(presMetaAv*c.leads/totalLeadsMetaAv); });
-
-    const presMetaEm=budget.emk.find(b=>b.canal==="Meta")?.pres||0;
-    const totalLeadsMetaEm=emMetaCamps.reduce((s,c)=>s+c.leads,0)||1;
-    emMetaCamps.forEach(c=>{ c.pres=Math.round(presMetaEm*c.leads/totalLeadsMetaEm); });
 
     data.averix=[
       ...avMetaCamps,
@@ -592,9 +587,11 @@ async function sincronizar(){
 
     buildTable("averix"); buildTable("emk"); attachInputs(); recalc();
 
-    const totalAv=(d.totales?.averix?.Meta||0)+(d.totales?.averix?.Google||0);
-    const totalEm=d.totales?.emk?.Meta||0;
-    showStatus("ok",`✅ Meta Ads API · ${d1}–${d2} · Averix: ${totalAv} leads · e-Markeed: ${totalEm} leads`);
+    const totalGastoAv = avMetaCamps.reduce((s,c)=>s+c.gasto,0);
+    const totalGastoEm = emMetaCamps.reduce((s,c)=>s+c.gasto,0);
+    const totalLeadsAv = avMetaCamps.reduce((s,c)=>s+c.leads,0)+(d.totales?.averix?.Google||0);
+    const totalLeadsEm = emMetaCamps.reduce((s,c)=>s+c.leads,0);
+    showStatus("ok",`✅ Meta Ads API · ${d1}–${d2} · Averix: ${totalLeadsAv} leads / ${fmtMXN(totalGastoAv)} · e-Markeed: ${totalLeadsEm} leads / ${fmtMXN(totalGastoEm)}`);
 
   } catch(err){
     console.warn("API falló:", err.message);
