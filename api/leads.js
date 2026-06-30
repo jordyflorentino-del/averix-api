@@ -84,7 +84,7 @@ const META_CAMP_CUENTA = {
 // ── Consultar Meta Ads API ──
 async function getMetaLeads(fi, ff, token, adAccountId) {
   const resultado = { averix: 0, emk: 0, detalle: {} };
-  const fields = `name,insights.time_range({"since":"${fi}","until":"${ff}"}){actions,campaign_name}`;
+  const fields = `name,effective_status,insights.time_range({"since":"${fi}","until":"${ff}"}){actions,spend,campaign_name}`;
   const url = `https://graph.facebook.com/v19.0/act_${adAccountId}/campaigns?fields=${encodeURIComponent(fields)}&access_token=${token}&limit=100`;
 
   const { status, body } = await httpsGet(url);
@@ -92,13 +92,15 @@ async function getMetaLeads(fi, ff, token, adAccountId) {
 
   for (const camp of body.data || []) {
     const name = camp.name || "";
-    // Extraer leads de actions
-    const actions = camp.insights?.data?.[0]?.actions || [];
+    const status = camp.effective_status || "UNKNOWN";
+    const insight = camp.insights?.data?.[0] || {};
+    const actions = insight.actions || [];
     const leadAction = actions.find(a =>
       a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped"
     );
     const leads = parseInt(leadAction?.value || 0);
-    resultado.detalle[name] = leads;
+    const spend = parseFloat(insight.spend || 0);
+    resultado.detalle[name] = { leads, spend, status };
 
     // Buscar cuenta por nombre de campaña
     const cuenta = Object.entries(META_CAMP_CUENTA).find(([k]) =>
@@ -110,17 +112,19 @@ async function getMetaLeads(fi, ff, token, adAccountId) {
   }
 
   // Paginar si hay más
-  let next = body.paging?.next;
-  while (next) {
+  let next = body.paging?.next;  while (next) {
     const { body: page } = await httpsGet(next);
     for (const camp of page.data || []) {
       const name = camp.name || "";
-      const actions = camp.insights?.data?.[0]?.actions || [];
+      const status = camp.effective_status || "UNKNOWN";
+      const insight = camp.insights?.data?.[0] || {};
+      const actions = insight.actions || [];
       const leadAction = actions.find(a =>
         a.action_type === "lead" || a.action_type === "onsite_conversion.lead_grouped"
       );
       const leads = parseInt(leadAction?.value || 0);
-      resultado.detalle[name] = leads;
+      const spend = parseFloat(insight.spend || 0);
+      resultado.detalle[name] = { leads, spend, status };
       const cuenta = Object.entries(META_CAMP_CUENTA).find(([k]) =>
         name.toLowerCase().includes(k.toLowerCase())
       )?.[1];
