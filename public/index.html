@@ -533,7 +533,6 @@ const sumR    = rows=>rows.reduce((a,r)=>({
 }),{pres:0,gasto:0,leads:0,neg:0,cierres:0});
 const set = (id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
 
-// ── Sincronizar ──
 async function sincronizar(){
   const fi=document.getElementById("fecha-inicio").value;
   const ff=document.getElementById("fecha-fin").value;
@@ -541,7 +540,7 @@ async function sincronizar(){
 
   const btn=document.getElementById("btn-sync");
   btn.disabled=true;
-  showStatus("loading","Consultando HubSpot en tiempo real...");
+  showStatus("loading","Consultando Meta Ads + HubSpot en tiempo real...");
 
   const budget=getBudget(fi,ff);
   if(!budget){
@@ -549,91 +548,63 @@ async function sincronizar(){
     btn.disabled=false; return;
   }
 
-  let leads;
-  try{
-    leads = await getLeadsRealtime(fi, ff);
-
-    // Construir filas por campaña para Averix Meta
-    const avMetaCamps = Object.entries(leads.averix.campañas)
-      .filter(([,v]) => v > 0)
-      .map(([nombre, leadsN]) => ({
-        canal: nombre, color: "#A8336E", pres: 0,
-        gasto: 0, leads: leadsN, neg: 0, cierres: 0, esCampaña: true
-      }));
-
-    // Construir filas por campaña para e-Markeed Meta
-    const emMetaCamps = Object.entries(leads.emk.campañas)
-      .filter(([,v]) => v > 0)
-      .map(([nombre, leadsN]) => ({
-        canal: nombre, color: "#A8336E", pres: 0,
-        gasto: 0, leads: leadsN, neg: 0, cierres: 0, esCampaña: true
-      }));
-
-    // Aplicar presupuesto del Sheet a los canales base
-    data.averix = [
-      ...avMetaCamps,
-      { canal: "Google", color: "#1E2761", pres: budget.averix.find(b=>b.canal==="Google")?.pres||0,
-        gasto: 0, leads: leads.averix.Google||0, neg: 0, cierres: 0 },
-      { canal: "LinkedIn", color: "#0077B5", pres: budget.averix.find(b=>b.canal==="LinkedIn")?.pres||0,
-        gasto: 0, leads: 0, neg: 0, cierres: 0 },
-    ];
-    // Agregar presupuesto Meta distribuido
-    const presMetaAv = budget.averix.find(b=>b.canal==="Meta")?.pres||0;
-    const totalLeadsMetaAv = avMetaCamps.reduce((s,c)=>s+c.leads,0)||1;
-    data.averix = data.averix.map(r => r.esCampaña
-      ? {...r, pres: Math.round(presMetaAv * r.leads/totalLeadsMetaAv)}
-      : r);
-
-    data.emk = [
-      ...emMetaCamps,
-      { canal: "Google", color: "#1E2761", pres: 0, gasto: 0, leads: 0, neg: 0, cierres: 0 },
-      { canal: "TikTok", color: "#010101", pres: 0, gasto: 0, leads: 0, neg: 0, cierres: 0 },
-    ];
-    const presMetaEm = budget.emk.find(b=>b.canal==="Meta")?.pres||0;
-    const totalLeadsMetaEm = emMetaCamps.reduce((s,c)=>s+c.leads,0)||1;
-    data.emk = data.emk.map(r => r.esCampaña
-      ? {...r, pres: Math.round(presMetaEm * r.leads/totalLeadsMetaEm)}
-      : r);
-
-    showStatus("ok", `✅ Meta Ads API · ${d1}–${d2} · Averix: ${leads.totales?.averix?.Meta||0} leads Meta + ${leads.averix.Google} Google · e-Markeed: ${leads.totales?.emk?.Meta||0} leads Meta`);
-  } catch(err){
-    // Fallback al cache si la API falla
-    console.warn("API falló, usando cache:", err.message);
-    leads = getLeadsFromCache(fi, ff);
-    // Fallback simple por canal
-    data.averix = budget.averix.map(b=>({
-      canal:b.canal, color:b.color, pres:b.pres,
-      gasto:0, leads:leads.averix[b.canal]||0, neg:0, cierres:0
-    }));
-    data.emk = budget.emk.map(b=>({
-      canal:b.canal, color:b.color, pres:b.pres,
-      gasto:0, leads:leads.emk[b.canal]||0, neg:0, cierres:0
-    }));
-    showStatus("warn","⚠️ Modo cache · Los leads son aproximados");
-  }
-
-  // Construir filas
-  data.averix = budget.averix.map(b=>({
-    canal:b.canal, color:b.color, pres:b.pres,
-    gasto:0, leads:leads.averix[b.canal]||0, neg:0, cierres:0
-  }));
-  data.emk = budget.emk.map(b=>({
-    canal:b.canal, color:b.color, pres:b.pres,
-    gasto:0, leads:leads.emk[b.canal]||0, neg:0, cierres:0
-  }));
-
-  buildTable("averix"); buildTable("emk"); attachInputs(); recalc();
-
-  const a=sumR(data.averix), e=sumR(data.emk);
   const d1=new Date(fi).toLocaleDateString("es-MX",{day:"numeric",month:"short"});
   const d2=new Date(ff).toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"});
-  const prevMsg = document.getElementById("sync-status").className.includes("ok")
-    ? ` · Leads: ${a.leads+e.leads} (Averix ${a.leads} · e-Markeed ${e.leads}) · Ingresa el gasto real manualmente`
-    : "";
-  showStatus(
-    document.getElementById("sync-status").className.includes("warn") ? "warn" : "ok",
-    `${document.getElementById("sync-status").querySelector("span")?.textContent || "✅"} · ${d1}–${d2} · Presupuesto: ${budget.label} · Leads: ${a.leads+e.leads} (Averix ${a.leads} · e-Markeed ${e.leads})`
-  );
+
+  try{
+    const resp = await fetch(`https://averix-dashboard-api.vercel.app/api/leads?fi=${fi}&ff=${ff}`);
+    if(!resp.ok) throw new Error(`API error ${resp.status}`);
+    const d = await resp.json();
+    if(d.error) throw new Error(d.error);
+
+    const avMetaCamps = Object.entries(d.averix?.Meta||{})
+      .filter(([,v])=>v>0)
+      .map(([nombre,leadsN])=>({
+        canal:nombre, color:"#A8336E",
+        pres:0, gasto:0, leads:leadsN, neg:0, cierres:0, esCampaña:true
+      }));
+
+    const emMetaCamps = Object.entries(d.emk?.Meta||{})
+      .filter(([,v])=>v>0)
+      .map(([nombre,leadsN])=>({
+        canal:nombre, color:"#A8336E",
+        pres:0, gasto:0, leads:leadsN, neg:0, cierres:0, esCampaña:true
+      }));
+
+    const presMetaAv=budget.averix.find(b=>b.canal==="Meta")?.pres||0;
+    const totalLeadsMetaAv=avMetaCamps.reduce((s,c)=>s+c.leads,0)||1;
+    avMetaCamps.forEach(c=>{ c.pres=Math.round(presMetaAv*c.leads/totalLeadsMetaAv); });
+
+    const presMetaEm=budget.emk.find(b=>b.canal==="Meta")?.pres||0;
+    const totalLeadsMetaEm=emMetaCamps.reduce((s,c)=>s+c.leads,0)||1;
+    emMetaCamps.forEach(c=>{ c.pres=Math.round(presMetaEm*c.leads/totalLeadsMetaEm); });
+
+    data.averix=[
+      ...avMetaCamps,
+      {canal:"Google",   color:"#1E2761", pres:budget.averix.find(b=>b.canal==="Google")?.pres||0,   gasto:0, leads:d.totales?.averix?.Google||0, neg:0, cierres:0},
+      {canal:"LinkedIn", color:"#0077B5", pres:budget.averix.find(b=>b.canal==="LinkedIn")?.pres||0, gasto:0, leads:0, neg:0, cierres:0},
+    ];
+    data.emk=[
+      ...emMetaCamps,
+      {canal:"Google", color:"#1E2761", pres:0, gasto:0, leads:0, neg:0, cierres:0},
+      {canal:"TikTok", color:"#010101", pres:0, gasto:0, leads:0, neg:0, cierres:0},
+    ];
+
+    buildTable("averix"); buildTable("emk"); attachInputs(); recalc();
+
+    const totalAv=(d.totales?.averix?.Meta||0)+(d.totales?.averix?.Google||0);
+    const totalEm=d.totales?.emk?.Meta||0;
+    showStatus("ok",`✅ Meta Ads API · ${d1}–${d2} · Averix: ${totalAv} leads · e-Markeed: ${totalEm} leads`);
+
+  } catch(err){
+    console.warn("API falló:", err.message);
+    const cl=getLeadsFromCache(fi,ff);
+    data.averix=budget.averix.map(b=>({canal:b.canal,color:b.color,pres:b.pres,gasto:0,leads:cl.averix[b.canal]||0,neg:0,cierres:0}));
+    data.emk=budget.emk.map(b=>({canal:b.canal,color:b.color,pres:b.pres,gasto:0,leads:cl.emk[b.canal]||0,neg:0,cierres:0}));
+    buildTable("averix"); buildTable("emk"); attachInputs(); recalc();
+    showStatus("warn","⚠️ Modo cache · "+err.message);
+  }
+
   btn.disabled=false;
 }
 
