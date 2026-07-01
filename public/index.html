@@ -3,684 +3,830 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <title>Panel · Averix + e-Markeed</title>
 <style>
-  :root{--navy:#1E2761;--berry:#A8336E;--berry-d:#6D2E46;--gold:#C9962F;--green:#2C8A5B;--ink:#2A2A3E;--cloud:#F2F3F7;--mute:#6B7280;--line:#D9DCE5;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Poppins',sans-serif;background:#EBEDF2;color:var(--ink);padding:24px 16px 60px;line-height:1.5;}
-  .wrap{max-width:1280px;margin:0 auto;}
-  header.page{background:var(--navy);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:18px;position:relative;overflow:hidden;}
-  header.page::before{content:"";position:absolute;top:0;left:0;width:6px;height:100%;background:var(--gold);}
-  header.page .kicker{font-size:10.5px;letter-spacing:2px;font-weight:700;color:#8FA8D8;text-transform:uppercase;}
-  header.page h1{font-size:22px;font-weight:700;margin:4px 0 2px;}
-  header.page p{font-size:11.5px;color:#CADCFC;}
-  section.block{background:#fff;border-radius:14px;padding:20px 22px 24px;margin-bottom:18px;box-shadow:0 4px 18px rgba(30,39,97,.07);}
-  .block-head{display:flex;align-items:center;gap:10px;margin-bottom:3px;flex-wrap:wrap;}
-  .block-head h2{font-size:17px;font-weight:700;}
-  .tag{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:2px 9px;border-radius:20px;}
-  .tag.averix{background:#E4E8F5;color:var(--navy);}
-  .tag.emk{background:#F6E2EC;color:var(--berry);}
-  .tag.hist{background:#E6F4ED;color:var(--green);}
-  .block-sub{font-size:11px;color:var(--mute);margin-bottom:14px;}
-  .periodo-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:#F0F4FF;border:1.5px solid #C5D0F0;border-radius:10px;padding:12px 16px;margin-bottom:14px;}
-  .periodo-bar label{font-size:11.5px;font-weight:600;color:var(--navy);display:flex;flex-direction:column;gap:3px;}
-  .periodo-bar input[type=date]{font-family:'Poppins',sans-serif;font-size:12px;padding:6px 9px;border:1.5px solid var(--line);border-radius:7px;color:var(--ink);background:#fff;}
-  button{font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:600;cursor:pointer;padding:7px 15px;border-radius:8px;border:1.5px solid var(--navy);background:var(--navy);color:#fff;transition:opacity .15s,transform .1s;}
-  button.ghost{background:#fff;color:var(--navy);}
-  button.btn-green{background:var(--green);border-color:var(--green);}
-  button.btn-sm{font-size:10.5px;padding:4px 10px;}
-  button.btn-danger{background:#fff;border-color:#e53935;color:#e53935;}
-  button:hover{opacity:.85;}button:active{transform:translateY(1px);}button:disabled{opacity:.4;cursor:not-allowed;}
-  .sync-status{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:8px 14px;border-radius:8px;margin-bottom:14px;flex-wrap:wrap;}
-  .sync-status.loading{background:#EFF6FF;color:#1d4ed8;}
-  .sync-status.ok{background:#ECFDF5;color:#065f46;}
-  .sync-status.warn{background:#FFFBEB;color:#92400e;}
-  .sync-status.error{background:#FEF2F2;color:#991b1b;}
-  .spinner{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0;}
-  @keyframes spin{to{transform:rotate(360deg);}}
-  /* sección canal */
-  .canal-section{margin-bottom:22px;}
-  .canal-section-head{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;margin-bottom:10px;}
-  .canal-section-head.meta{background:#EBF0FD;}
-  .canal-section-head.google{background:#FFF3E0;}
-  .canal-section-head h3{font-size:13px;font-weight:700;}
-  .canal-section-head.meta h3{color:#1565C0;}
-  .canal-section-head.google h3{color:#E65100;}
-  /* presupuesto manual */
-  .pres-manual{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--mute);margin-bottom:10px;flex-wrap:wrap;}
-  .pres-manual label{font-weight:600;color:var(--ink);}
-  .pres-manual input{width:120px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:12px;font-family:'Poppins',sans-serif;color:var(--ink);background:#FCFCFD;}
-  .pres-manual input:focus{outline:none;border-color:var(--navy);}
-  table{width:100%;border-collapse:collapse;font-size:12px;}
-  thead th{background:var(--navy);color:#fff;font-weight:600;padding:9px 7px;text-align:center;font-size:11px;}
-  .emk thead th{background:var(--berry);}
-  .google-tbl thead th{background:#E65100;}
-  .hist-tbl thead th{background:var(--green);}
-  tbody td{padding:6px 7px;text-align:center;border-bottom:1px solid var(--line);background:#fff;}
-  tbody tr:nth-child(even) td{background:#FAFBFC;}
-  td.label{text-align:left;font-weight:600;padding-left:10px;font-size:11.5px;}
-  td.calc{font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums;}
-  .emk td.calc{color:var(--berry);}
-  td.dim{color:var(--mute);font-weight:400;}
-  td.hs{color:var(--green);font-weight:700;}
-  input[type=number]{width:90px;padding:5px 7px;border:1.5px solid var(--line);border-radius:6px;font-size:11.5px;text-align:right;font-family:'Poppins',sans-serif;color:var(--ink);background:#FCFCFD;}
-  input[type=number]:focus{outline:none;border-color:var(--berry);background:#fff;}
-  input.inv{width:105px;}
-  tfoot td{background:var(--berry-d);color:#fff;font-weight:700;padding:9px 7px;text-align:center;font-size:11.5px;}
-  tfoot td.label{color:#fff;text-align:left;padding-left:10px;}
-  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:18px;}
-  .card{background:var(--cloud);border-radius:10px;padding:13px 14px;position:relative;overflow:hidden;}
-  .card::before{content:"";position:absolute;top:0;left:0;width:4px;height:100%;}
-  .card.c-navy::before{background:var(--navy);}
-  .card.c-berry::before{background:var(--berry);}
-  .card.c-gold::before{background:var(--gold);}
-  .card.c-green::before{background:var(--green);}
-  .card .c-label{font-size:9.5px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.4px;}
-  .card .c-value{font-size:20px;font-weight:700;margin:2px 0 1px;font-variant-numeric:tabular-nums;}
-  .card.c-navy .c-value{color:var(--navy);}
-  .card.c-berry .c-value{color:var(--berry);}
-  .card.c-gold .c-value{color:var(--gold);}
-  .card.c-green .c-value{color:var(--green);}
-  .card .c-sub{font-size:9.5px;color:var(--mute);}
-  .dist{margin-top:18px;}
-  .dist h3{font-size:12.5px;font-weight:700;margin-bottom:11px;}
-  .donut-wrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap;}
-  .donut-legend{display:flex;flex-direction:column;gap:6px;flex:1;min-width:130px;}
-  .leg-item{display:flex;align-items:center;gap:6px;font-size:11px;}
-  .leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-  .leg-name{flex:1;color:var(--ink);font-weight:500;}
-  .leg-pct{font-weight:700;}
-  .bar-row{display:flex;align-items:center;gap:9px;margin-bottom:8px;}
-  .bar-row .bname{width:200px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .bar-track{flex:1;background:var(--cloud);border-radius:6px;height:20px;overflow:hidden;}
-  .bar-fill{height:100%;border-radius:6px 0 0 6px;transition:width .4s ease;}
-  .bar-row .bpct{width:48px;text-align:right;font-size:11px;font-weight:700;}
-  .bar-row .bamt{width:110px;text-align:right;font-size:10.5px;color:var(--mute);}
-  .tab-nav{display:flex;border-bottom:2px solid var(--line);}
-  .tab-btn{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;padding:9px 16px;border:none;background:none;color:var(--mute);border-bottom:3px solid transparent;margin-bottom:-2px;transition:color .15s,border-color .15s;}
-  .tab-btn.active{color:var(--navy);border-bottom-color:var(--navy);}
-  .tab-panel{display:none;padding-top:16px;}
-  .tab-panel.active{display:block;}
-  .empty-state{text-align:center;padding:32px;color:var(--mute);font-size:12.5px;}
-  .empty-state .big{font-size:32px;margin-bottom:7px;}
-  .save-bar{display:flex;gap:10px;align-items:center;background:#E6F4ED;border:1.5px solid var(--green);border-radius:10px;padding:10px 14px;margin-bottom:16px;flex-wrap:wrap;}
-  .save-bar label{font-size:12px;font-weight:700;color:var(--green);white-space:nowrap;}
-  .save-bar input[type=text]{flex:1;min-width:140px;font-family:'Poppins',sans-serif;font-size:12px;padding:6px 9px;border:1.5px solid var(--line);border-radius:7px;color:var(--ink);background:#fff;}
-  .badge-editing{display:inline-block;background:#FFF3CD;color:#7a5c00;font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:20px;border:1px solid #f0c040;margin-left:6px;vertical-align:middle;}
-  .hist-actions{display:flex;gap:5px;justify-content:center;}
-  .note-foot{font-size:10.5px;color:var(--mute);margin-top:9px;}
-  .src-legend{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:14px;font-size:10.5px;padding:8px 12px;background:#fff;border-radius:8px;border:1px solid var(--line);}
-  .src-legend span{display:flex;align-items:center;gap:4px;color:var(--mute);}
-  .src-legend .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-  @media print{
-    body{background:#fff!important;padding:8px;}
-    .save-bar,.tab-nav,.periodo-bar button,.sync-status,.src-legend{display:none!important;}
-    .tab-panel{display:block!important;}
-    section.block{box-shadow:none!important;}
-    button{display:none!important;}
-  }
-  @media(max-width:800px){
-    .cards{grid-template-columns:repeat(2,1fr);}
-    .bar-row .bamt{display:none;}
-    input.inv,input[type=number]{width:72px;}
-  }
+:root {
+  --av:#1A56C4;   /* Averix azul sólido */
+  --av-d:#0F3A8A; /* Averix azul oscuro */
+  --av-l:#EEF3FC; /* Averix azul muy claro */
+  --em:#7C28C8;   /* e-Markeed morado sólido */
+  --em-d:#4E1580; /* e-Markeed morado oscuro */
+  --em-l:#F3EEF9; /* e-Markeed morado muy claro */
+  --green:#15803D;
+  --green-l:#F0FDF4;
+  --gold:#B45309;
+  --gold-l:#FFFBEB;
+  --red:#B91C1C;
+  --red-l:#FEF2F2;
+  --ink:#111827;
+  --ink-2:#374151;
+  --mute:#6B7280;
+  --line:#E5E7EB;
+  --bg:#F8F9FB;
+  --white:#FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;}
+
+/* ── NAV ── */
+.top-nav{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;background:var(--white);border-bottom:2px solid var(--line);position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.06);}
+.nav-brand{display:flex;align-items:center;gap:6px;}
+.logo-av{font-size:17px;font-weight:800;color:var(--av);}
+.logo-sep{color:var(--line);font-size:20px;font-weight:300;}
+.logo-em{font-size:17px;font-weight:800;color:var(--em);}
+.nav-tabs{display:flex;gap:2px;background:var(--bg);border-radius:8px;padding:3px;}
+.nav-tab{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;padding:6px 16px;border-radius:6px;border:none;cursor:pointer;background:transparent;color:var(--mute);transition:all .18s;}
+.nav-tab.active{background:var(--white);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1);}
+.nav-tab:hover:not(.active){color:var(--ink);}
+
+/* ── PERIODO ── */
+.periodo-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px 20px;margin:20px 24px 0;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.periodo-bar label{font-size:10.5px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.5px;display:flex;flex-direction:column;gap:4px;}
+.periodo-bar input[type=date]{font-family:'Poppins',sans-serif;font-size:12.5px;padding:7px 11px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink);background:var(--white);}
+.periodo-bar input[type=date]:focus{outline:none;border-color:var(--av);}
+
+/* ── BOTONES ── */
+button{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;padding:8px 18px;border-radius:8px;border:none;transition:all .18s;}
+.btn-av{background:var(--av);color:#fff;}
+.btn-av:hover{background:var(--av-d);}
+.btn-em{background:var(--em);color:#fff;}
+.btn-em:hover{background:var(--em-d);}
+.btn-ghost{background:var(--white);border:1.5px solid var(--line);color:var(--ink-2);}
+.btn-ghost:hover{border-color:var(--av);color:var(--av);}
+.btn-sm{font-size:10.5px;padding:4px 10px;}
+.btn-danger{background:var(--red-l);border:1px solid #FECACA;color:var(--red);}
+button:disabled{opacity:.45;cursor:not-allowed;}
+
+/* ── STATUS ── */
+.sync-status{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:10px 16px;border-radius:10px;margin:14px 24px 0;flex-wrap:wrap;}
+.sync-status.loading{background:#EFF6FF;border:1px solid #BFDBFE;color:#1D4ED8;}
+.sync-status.ok{background:var(--green-l);border:1px solid #BBF7D0;color:var(--green);}
+.sync-status.warn{background:var(--gold-l);border:1px solid #FDE68A;color:var(--gold);}
+.sync-status.error{background:var(--red-l);border:1px solid #FECACA;color:var(--red);}
+.spinner{width:13px;height:13px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── PANELS ── */
+.tab-panel{display:none;padding:20px 24px 48px;}
+.tab-panel.active{display:block;}
+
+/* ── SAVE BAR ── */
+.save-bar{display:flex;gap:10px;align-items:center;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:20px;flex-wrap:wrap;}
+.save-bar label{font-size:10.5px;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+.save-bar input[type=text]{flex:1;min-width:140px;font-family:'Poppins',sans-serif;font-size:12.5px;padding:7px 12px;border:1.5px solid var(--line);border-radius:8px;color:var(--ink);}
+.save-bar input[type=text]:focus{outline:none;border-color:var(--em);}
+.badge-editing{background:var(--gold-l);color:var(--gold);font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #FDE68A;margin-left:6px;}
+
+/* ── SECCIÓN HEADER ── */
+.section-wrap{margin-bottom:28px;}
+.section-header{padding:14px 20px;border-radius:12px 12px 0 0;margin-bottom:0;}
+.section-header.av{background:var(--av);color:#fff;}
+.section-header.em{background:var(--em);color:#fff;}
+.section-header h2{font-size:16px;font-weight:700;}
+.section-header p{font-size:10.5px;opacity:.8;margin-top:2px;}
+.section-body{background:var(--white);border:1px solid var(--line);border-top:none;border-radius:0 0 12px 12px;padding:20px;}
+
+/* ── CANAL BLOCK ── */
+.canal-block{border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:14px;background:var(--white);}
+.canal-block.google{border-left:4px solid var(--gold);}
+.canal-block.meta-av{border-left:4px solid var(--av);}
+.canal-block.meta-em{border-left:4px solid var(--em);}
+.canal-head{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.canal-head h3{font-size:13px;font-weight:700;color:var(--ink);}
+.badge-canal{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:4px;}
+.badge-meta-av{background:var(--av-l);color:var(--av);}
+.badge-meta-em{background:var(--em-l);color:var(--em);}
+.badge-google{background:var(--gold-l);color:var(--gold);}
+
+/* ── PRESUPUESTO MANUAL ── */
+.pres-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:var(--bg);border-radius:8px;border:1px dashed var(--line);}
+.pres-row label{font-size:10.5px;font-weight:600;color:var(--mute);}
+.pres-row input{width:115px;padding:6px 10px;border:1.5px solid var(--line);border-radius:7px;font-size:12px;font-family:'Poppins',sans-serif;color:var(--ink);background:var(--white);text-align:right;}
+.pres-row input:focus{outline:none;border-color:var(--av);}
+.pres-row span{font-size:10.5px;color:var(--mute);}
+
+/* ── TABLA ── */
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead th{background:var(--bg);color:var(--mute);font-weight:600;padding:9px 8px;text-align:center;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--line);}
+thead th:first-child{text-align:left;padding-left:10px;}
+tbody td{padding:8px 8px;text-align:center;border-bottom:1px solid var(--line);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--bg);}
+td.label{text-align:left;font-weight:600;padding-left:10px;color:var(--ink);}
+td.calc{font-weight:600;color:var(--av);font-variant-numeric:tabular-nums;}
+td.calc-em{font-weight:600;color:var(--em);font-variant-numeric:tabular-nums;}
+td.dim{color:var(--mute);font-weight:400;}
+td.hs{color:var(--green);font-weight:700;}
+td.gasto-real{color:var(--ink-2);font-weight:600;}
+input[type=number]{width:88px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:11.5px;text-align:right;font-family:'Poppins',sans-serif;color:var(--ink);background:var(--white);}
+input[type=number]:focus{outline:none;border-color:var(--av);}
+tfoot td{background:var(--bg);font-weight:700;padding:9px 8px;text-align:center;border-top:2px solid var(--line);color:var(--ink);}
+tfoot td.label{text-align:left;padding-left:10px;}
+tfoot.av td.label{color:var(--av);}
+tfoot.em td.label{color:var(--em);}
+
+/* ── COMENTARIO PAUSADAS ── */
+.comentario-input{width:100%;font-family:'Poppins',sans-serif;font-size:11px;padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;color:var(--ink-2);background:var(--white);resize:none;}
+.comentario-input:focus{outline:none;border-color:var(--gold);}
+.comentario-input::placeholder{color:var(--mute);}
+
+/* ── PAUSADAS TOGGLE ── */
+.pausadas-toggle{display:inline-flex;align-items:center;gap:7px;cursor:pointer;font-size:11px;font-weight:600;color:var(--mute);padding:6px 12px;border-radius:7px;border:1.5px solid var(--line);background:var(--bg);margin-top:10px;transition:all .18s;}
+.pausadas-toggle:hover{border-color:var(--gold);color:var(--gold);}
+.pausadas-container{display:none;margin-top:10px;}
+.pausadas-container.open{display:block;}
+.pausadas-label-badge{font-size:10px;background:var(--gold-l);color:var(--gold);padding:1px 7px;border-radius:4px;border:1px solid #FDE68A;font-weight:700;}
+
+/* ── CARDS ── */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+.card{border-radius:10px;padding:16px 16px 14px;border:1px solid var(--line);background:var(--white);position:relative;overflow:hidden;}
+.card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;}
+.card.av::before{background:var(--av);}
+.card.em::before{background:var(--em);}
+.card.green::before{background:var(--green);}
+.card.gold::before{background:var(--gold);}
+.card .c-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mute);margin-bottom:6px;}
+.card .c-value{font-size:22px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1;}
+.card.av .c-value{color:var(--av);}
+.card.em .c-value{color:var(--em);}
+.card.green .c-value{color:var(--green);}
+.card.gold .c-value{color:var(--gold);}
+.card .c-sub{font-size:10px;color:var(--mute);margin-top:4px;}
+
+/* ── DIST ── */
+.dist{margin-top:16px;padding-top:16px;border-top:1px solid var(--line);}
+.dist h4{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--mute);margin-bottom:12px;}
+.donut-wrap{display:flex;gap:20px;align-items:center;flex-wrap:wrap;}
+.donut-legend{display:flex;flex-direction:column;gap:6px;flex:1;min-width:130px;}
+.leg-item{display:flex;align-items:center;gap:7px;font-size:11px;}
+.leg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.leg-name{flex:1;color:var(--ink-2);}
+.leg-pct{font-weight:700;}
+.bar-row{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
+.bar-row .bname{width:190px;font-size:10.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2);}
+.bar-track{flex:1;background:var(--bg);border-radius:4px;height:18px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px 0 0 4px;transition:width .4s;}
+.bar-row .bpct{width:46px;text-align:right;font-size:10.5px;font-weight:700;color:var(--ink);}
+.bar-row .bamt{width:105px;text-align:right;font-size:10px;color:var(--mute);}
+
+/* ── CONSOLIDADO ── */
+.consolidado{background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px;}
+.consolidado-head{background:linear-gradient(135deg,var(--av),var(--em));padding:14px 20px;}
+.consolidado-head h2{font-size:15px;font-weight:700;color:#fff;}
+.consolidado-body{padding:16px 20px;}
+
+/* ── BADGES ── */
+.badge-activa{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--green-l);color:var(--green);border:1px solid #BBF7D0;}
+.badge-pausada{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--gold-l);color:var(--gold);border:1px solid #FDE68A;}
+.badge-inactiva{font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;background:var(--red-l);color:var(--red);border:1px solid #FECACA;}
+
+/* ── HISTORIAL ── */
+.hist-tbl thead th{background:var(--av);color:#fff;border-bottom:none;}
+.hist-tbl tbody td{font-size:11.5px;}
+.hist-actions{display:flex;gap:5px;justify-content:center;}
+
+/* ── GRÁFICA ── */
+.chart-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;}
+.chart-controls label{font-size:11px;font-weight:700;color:var(--mute);}
+.chart-controls select{font-family:'Poppins',sans-serif;font-size:12px;padding:6px 10px;border-radius:8px;border:1.5px solid var(--line);color:var(--ink);background:var(--white);}
+
+/* ── MISC ── */
+.empty-state{text-align:center;padding:40px;color:var(--mute);}
+.empty-state .big{font-size:36px;margin-bottom:8px;}
+.src-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:10.5px;padding:8px 0;margin-bottom:4px;}
+.src-legend span{display:flex;align-items:center;gap:5px;color:var(--mute);}
+.src-legend .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.note-foot{font-size:10px;color:var(--mute);text-align:center;padding:12px 0 4px;}
+
+@media print{
+  .top-nav,.save-bar,.periodo-bar button,.sync-status{display:none!important;}
+  .tab-panel{display:block!important;}
+  button{display:none!important;}
+}
+@media(max-width:800px){
+  .cards{grid-template-columns:repeat(2,1fr);}
+  .stats3{grid-template-columns:repeat(2,1fr);}
+  .bar-row .bamt{display:none;}
+  .tab-panel{padding:14px 12px 30px;}
+  .periodo-bar,.sync-status{margin-left:12px;margin-right:12px;}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<header class="page">
-  <div class="kicker">Panel de Marketing Digital · Averix + e-Markeed</div>
-  <h1>Dashboard Integrado <span id="editing-badge" class="badge-editing" style="display:none;">Editando mes guardado</span></h1>
-  <p>Leads reales desde Meta Ads API · Presupuesto manual o desde Google Sheets · Gasto real desde Meta</p>
-</header>
+<!-- NAV -->
+<div class="top-nav">
+  <div class="nav-brand">
+    <span class="logo-av">Averix</span>
+    <span class="logo-sep">·</span>
+    <span class="logo-em">e-Markeed</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showTab('tab-actual',this)">📊 Periodo actual</button>
+    <button class="nav-tab" onclick="showTab('tab-historial',this)">📅 Historial</button>
+    <button class="nav-tab" onclick="showTab('tab-grafica',this)">📈 Tendencias</button>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-ghost" onclick="imprimirPanel()">⎙ PDF</button>
+  </div>
+</div>
 
+<!-- PERIODO -->
 <div class="periodo-bar">
   <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
   <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-26"></label>
-  <button class="btn-green" id="btn-sync" onclick="sincronizar()">🔄 Cargar periodo</button>
-  <button class="ghost" onclick="imprimirPanel()">⎙ Imprimir / PDF</button>
+  <button class="btn-av" id="btn-sync" onclick="sincronizar()">🔄 Cargar periodo</button>
 </div>
 
 <div id="sync-status" style="display:none;"></div>
 
-<div class="src-legend">
-  <span><span class="dot" style="background:var(--gold)"></span> Presupuesto: editable manualmente</span>
-  <span><span class="dot" style="background:var(--green)"></span> Leads y gasto: Meta Ads API (tiempo real)</span>
-  <span><span class="dot" style="background:#9C27B0"></span> Negocios / Cierres: editable</span>
-</div>
-
-<div class="tab-nav">
-  <button class="tab-btn active" onclick="showTab('tab-actual',this)">📊 Periodo actual</button>
-  <button class="tab-btn" onclick="showTab('tab-historial',this)">📅 Historial</button>
-  <button class="tab-btn" onclick="showTab('tab-grafica',this)">📈 Tendencias</button>
-</div>
-
-<!-- TAB ACTUAL -->
+<!-- TAB: PERIODO ACTUAL -->
 <div class="tab-panel active" id="tab-actual">
-  <div class="save-bar" style="margin-top:16px;">
-    <label>💾 Guardar periodo como:</label>
-    <input type="text" id="mes-nombre" placeholder="ej. Jun 2026" maxlength="50">
-    <button class="btn-green" onclick="guardarMes()">Guardar</button>
-    <button class="ghost" onclick="resetData()">↺ Limpiar</button>
+  <div class="save-bar">
+    <label>Guardar como</label>
+    <input type="text" id="mes-nombre" placeholder="ej. Junio 2026" maxlength="50">
+    <button class="btn-em" onclick="guardarMes()">💾 Guardar periodo</button>
+    <button class="btn-ghost" onclick="resetData()">↺ Limpiar</button>
+    <span id="editing-badge" class="badge-editing" style="display:none;">Editando periodo guardado</span>
   </div>
 
-  <!-- AVERIX -->
-  <section class="block">
-    <div class="block-head"><h2>Averix México</h2><span class="tag averix">Averix</span></div>
-    <div class="block-sub">Campañas de Meta y Google · Leads y gasto desde Meta Ads API · Presupuesto editable</div>
+  <div class="src-legend">
+    <span><span class="dot" style="background:var(--green)"></span>Leads y gasto: Meta Ads API (tiempo real)</span>
+    <span><span class="dot" style="background:var(--av)"></span>Google leads: HubSpot contactos</span>
+    <span><span class="dot" style="background:var(--gold)"></span>Presupuesto: editable manualmente</span>
+    <span><span class="dot" style="background:var(--mute)"></span>Negocios / Cierres: editable</span>
+  </div>
 
-    <!-- META AVERIX -->
-    <div class="canal-section">
-      <div class="canal-section-head meta">
-        <h3>📘 Meta Ads</h3>
-      </div>
-      <div class="pres-manual">
-        <label>Presupuesto Meta Averix:</label>
-        <input type="number" id="pres-meta-av" value="17342" min="0" step="100" oninput="recalcPresupuesto()"> MXN
-      </div>
-      <table id="tblAvMeta">
-        <thead><tr>
-          <th style="text-align:left;padding-left:10px;">Campaña</th>
-          <th>Gasto real<br><span style="font-size:9px;opacity:.8;">Meta API</span></th>
-          <th>Leads<br><span style="font-size:9px;opacity:.8;">Meta API</span></th>
-          <th>Negocios</th><th>Cierres</th>
-          <th>CPL</th><th>CPN</th><th>CPA</th>
-        </tr></thead>
-        <tbody></tbody>
-        <tfoot><tr>
-          <td class="label">TOTAL META</td>
-          <td id="av-meta-gasto">—</td><td id="av-meta-leads">—</td>
-          <td id="av-meta-neg">—</td><td id="av-meta-cierres">—</td>
-          <td id="av-meta-cpl">—</td><td id="av-meta-cpn">—</td><td id="av-meta-cpa">—</td>
-        </tr></tfoot>
-      </table>
+  <!-- ═══ AVERIX ═══ -->
+  <div class="section-wrap">
+    <div class="section-header av">
+      <h2>Averix México</h2>
+      <p>Campañas Meta y Google · Leads y gasto en tiempo real</p>
     </div>
+    <div class="section-body">
 
-    <!-- GOOGLE AVERIX -->
-    <div class="canal-section">
-      <div class="canal-section-head google">
-        <h3>🔍 Google Ads</h3>
+      <!-- META AVERIX ACTIVAS -->
+      <div class="canal-block meta-av">
+        <div class="canal-head">
+          <span class="badge-canal badge-meta-av">📘 Meta Ads</span>
+          <h3>Campañas activas</h3>
+        </div>
+        <div class="pres-row">
+          <label>Presupuesto Meta Averix:</label>
+          <input type="number" id="pres-meta-av" value="0" min="0" step="100" oninput="recalc()">
+          <span>MXN</span>
+        </div>
+        <table id="tblAvMetaActivas">
+          <thead><tr>
+            <th>Campaña</th>
+            <th>Gasto real</th><th>Leads</th>
+            <th>Negocios</th><th>Cierres</th>
+            <th>CPL</th><th>CPN</th><th>CPA</th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot class="av"><tr>
+            <td class="label">TOTAL ACTIVAS</td>
+            <td id="av-ma-gasto">—</td><td id="av-ma-leads">—</td>
+            <td id="av-ma-neg">—</td><td id="av-ma-cierres">—</td>
+            <td id="av-ma-cpl">—</td><td id="av-ma-cpn">—</td><td id="av-ma-cpa">—</td>
+          </tr></tfoot>
+        </table>
+        <div>
+          <div class="pausadas-toggle" onclick="togglePausadas('av-meta')">
+            <span id="av-meta-icon">▶</span>
+            <span id="av-meta-lbl">Ver campañas pausadas / inactivas</span>
+          </div>
+          <div class="pausadas-container" id="av-meta-pausadas">
+            <table id="tblAvMetaPausadas" style="margin-top:8px;">
+              <thead><tr>
+                <th>Campaña</th><th>Gasto</th><th>Leads</th><th>Estado</th><th>Comentario / Motivo de pausa</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <div class="pres-manual">
-        <label>Presupuesto Google Averix:</label>
-        <input type="number" id="pres-google-av" value="1766" min="0" step="100" oninput="recalcPresupuesto()"> MXN
-        <span style="margin-left:8px;">Gasto real:</span>
-        <input type="number" id="gasto-google-av" value="0" min="0" step="0.01" oninput="recalcPresupuesto()"> MXN
-      </div>
-      <table class="google-tbl" id="tblAvGoogle">
-        <thead><tr>
-          <th style="text-align:left;padding-left:10px;">Campaña</th>
-          <th>Gasto real<br><span style="font-size:9px;opacity:.8;">editable</span></th>
-          <th>Leads<br><span style="font-size:9px;opacity:.8;">HubSpot</span></th>
-          <th>Negocios</th><th>Cierres</th>
-          <th>CPL</th><th>CPN</th><th>CPA</th>
-        </tr></thead>
-        <tbody></tbody>
-        <tfoot><tr>
-          <td class="label">TOTAL GOOGLE</td>
-          <td id="av-google-gasto">—</td><td id="av-google-leads">—</td>
-          <td id="av-google-neg">—</td><td id="av-google-cierres">—</td>
-          <td id="av-google-cpl">—</td><td id="av-google-cpn">—</td><td id="av-google-cpa">—</td>
-        </tr></tfoot>
-      </table>
-    </div>
 
-    <!-- CARDS AVERIX -->
-    <div class="cards">
-      <div class="card c-gold"><div class="c-label">Presupuesto total</div><div class="c-value" id="av-card-pres">—</div><div class="c-sub">Meta + Google</div></div>
-      <div class="card c-navy"><div class="c-label">Gasto real</div><div class="c-value" id="av-card-gasto">—</div><div class="c-sub" id="av-card-vsbudget">—</div></div>
-      <div class="card c-green"><div class="c-label">Leads totales</div><div class="c-value" id="av-card-leads">—</div><div class="c-sub" id="av-card-cpl">CPL —</div></div>
-      <div class="card c-berry"><div class="c-label">Cierres</div><div class="c-value" id="av-card-cierres">—</div><div class="c-sub" id="av-card-cpa">CPA —</div></div>
-    </div>
-    <div class="dist"><h3>Distribución del gasto por campaña (Meta)</h3>
-      <div class="donut-wrap">
-        <canvas id="donut-av" width="140" height="140"></canvas>
-        <div class="donut-legend" id="legend-av"></div>
+      <!-- GOOGLE AVERIX -->
+      <div class="canal-block google">
+        <div class="canal-head">
+          <span class="badge-canal badge-google">🔍 Google Ads</span>
+          <h3>Campañas</h3>
+        </div>
+        <div class="pres-row">
+          <label>Presupuesto Google:</label>
+          <input type="number" id="pres-google-av" value="0" min="0" step="100" oninput="recalc()">
+          <span>MXN &nbsp;·&nbsp; Gasto real:</span>
+          <input type="number" id="gasto-google-av" value="0" min="0" step="0.01" oninput="recalc()">
+          <span>MXN</span>
+        </div>
+        <table id="tblAvGoogle">
+          <thead><tr>
+            <th>Campaña</th>
+            <th>Gasto real</th><th>Leads</th>
+            <th>Negocios</th><th>Cierres</th>
+            <th>CPL</th><th>CPN</th><th>CPA</th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot><tr>
+            <td class="label" style="color:var(--gold);">TOTAL GOOGLE</td>
+            <td id="av-g-gasto">—</td><td id="av-g-leads">—</td>
+            <td id="av-g-neg">—</td><td id="av-g-cierres">—</td>
+            <td id="av-g-cpl">—</td><td id="av-g-cpn">—</td><td id="av-g-cpa">—</td>
+          </tr></tfoot>
+        </table>
       </div>
-      <div id="av-dist" style="margin-top:14px;"></div>
-    </div>
-    <div class="cards" style="grid-template-columns:repeat(3,1fr);">
-      <div class="card c-green"><div class="c-label">Tasa de cierre</div><div class="c-value" id="av-tasa">—</div><div class="c-sub">Cierres ÷ leads</div></div>
-      <div class="card c-berry"><div class="c-label">Negocio → cierre</div><div class="c-value" id="av-tasa-nc">—</div><div class="c-sub">Cierres ÷ negocios</div></div>
-      <div class="card c-navy"><div class="c-label">vs. presupuesto total</div><div class="c-value" id="av-vspres">—</div><div class="c-sub" id="av-vspres-sub">—</div></div>
-    </div>
-  </section>
 
-  <!-- E-MARKEED -->
-  <section class="block emk">
-    <div class="block-head"><h2>e-Markeed</h2><span class="tag emk">e-Markeed</span></div>
-    <div class="block-sub">Campañas de Meta · Leads y gasto desde Meta Ads API · Presupuesto editable</div>
+      <!-- CARDS AVERIX -->
+      <div class="cards">
+        <div class="card gold"><div class="c-label">Presupuesto total</div><div class="c-value" id="av-c-pres">—</div><div class="c-sub">Meta + Google (MXN)</div></div>
+        <div class="card av"><div class="c-label">Gasto real</div><div class="c-value" id="av-c-gasto">—</div><div class="c-sub" id="av-c-vs">—</div></div>
+        <div class="card green"><div class="c-label">Leads totales</div><div class="c-value" id="av-c-leads">—</div><div class="c-sub" id="av-c-cpl">CPL —</div></div>
+        <div class="card av"><div class="c-label">Cierres</div><div class="c-value" id="av-c-cierres">—</div><div class="c-sub" id="av-c-cpa">CPA —</div></div>
+      </div>
 
-    <!-- META E-MARKEED -->
-    <div class="canal-section">
-      <div class="canal-section-head meta">
-        <h3>📘 Meta Ads</h3>
+      <div class="dist">
+        <h4>Distribución del gasto por campaña — Meta</h4>
+        <div class="donut-wrap">
+          <canvas id="donut-av" width="130" height="130"></canvas>
+          <div class="donut-legend" id="legend-av"></div>
+        </div>
+        <div id="av-dist" style="margin-top:14px;"></div>
       </div>
-      <div class="pres-manual">
-        <label>Presupuesto Meta e-Markeed:</label>
-        <input type="number" id="pres-meta-em" value="7494" min="0" step="100" oninput="recalcPresupuesto()"> MXN
-      </div>
-      <table id="tblEmMeta">
-        <thead><tr>
-          <th style="text-align:left;padding-left:10px;">Campaña</th>
-          <th>Gasto real<br><span style="font-size:9px;opacity:.8;">Meta API</span></th>
-          <th>Leads<br><span style="font-size:9px;opacity:.8;">Meta API</span></th>
-          <th>Negocios</th><th>Cierres</th>
-          <th>CPL</th><th>CPN</th><th>CPA</th>
-        </tr></thead>
-        <tbody></tbody>
-        <tfoot><tr>
-          <td class="label">TOTAL META</td>
-          <td id="em-meta-gasto">—</td><td id="em-meta-leads">—</td>
-          <td id="em-meta-neg">—</td><td id="em-meta-cierres">—</td>
-          <td id="em-meta-cpl">—</td><td id="em-meta-cpn">—</td><td id="em-meta-cpa">—</td>
-        </tr></tfoot>
-      </table>
-    </div>
 
-    <div class="cards" style="grid-template-columns:repeat(4,1fr);">
-      <div class="card c-gold"><div class="c-label">Presupuesto</div><div class="c-value" id="em-card-pres">—</div><div class="c-sub">MXN asignados</div></div>
-      <div class="card c-navy"><div class="c-label">Gasto real</div><div class="c-value" id="em-card-gasto">—</div><div class="c-sub" id="em-card-vsbudget">—</div></div>
-      <div class="card c-green"><div class="c-label">Leads</div><div class="c-value" id="em-card-leads">—</div><div class="c-sub" id="em-card-cpl">CPL —</div></div>
-      <div class="card c-berry"><div class="c-label">Cierres</div><div class="c-value" id="em-card-cierres">—</div><div class="c-sub" id="em-card-cpa">CPA —</div></div>
-    </div>
-    <div class="dist"><h3>Distribución del gasto por campaña (Meta)</h3>
-      <div class="donut-wrap">
-        <canvas id="donut-em" width="140" height="140"></canvas>
-        <div class="donut-legend" id="legend-em"></div>
+      <div class="stats3">
+        <div class="card green"><div class="c-label">Tasa de cierre</div><div class="c-value" id="av-tasa">—</div><div class="c-sub">Cierres ÷ leads</div></div>
+        <div class="card av"><div class="c-label">Negocio → cierre</div><div class="c-value" id="av-tasa-nc">—</div><div class="c-sub">Cierres ÷ negocios</div></div>
+        <div class="card gold"><div class="c-label">vs. presupuesto total</div><div class="c-value" id="av-vspres">—</div><div class="c-sub" id="av-vspres-sub">—</div></div>
       </div>
-      <div id="em-dist" style="margin-top:14px;"></div>
     </div>
-    <div class="cards" style="grid-template-columns:repeat(3,1fr);">
-      <div class="card c-green"><div class="c-label">Tasa de cierre</div><div class="c-value" id="em-tasa">—</div><div class="c-sub">Cierres ÷ leads</div></div>
-      <div class="card c-berry"><div class="c-label">Negocio → cierre</div><div class="c-value" id="em-tasa-nc">—</div><div class="c-sub">Cierres ÷ negocios</div></div>
-      <div class="card c-navy"><div class="c-label">vs. presupuesto e-Markeed</div><div class="c-value" id="em-vspres">—</div><div class="c-sub" id="em-vspres-sub">—</div></div>
+  </div>
+
+  <!-- ═══ E-MARKEED ═══ -->
+  <div class="section-wrap">
+    <div class="section-header em">
+      <h2>e-Markeed</h2>
+      <p>Campañas Meta · Leads y gasto en tiempo real</p>
     </div>
-  </section>
+    <div class="section-body">
+
+      <div class="canal-block meta-em">
+        <div class="canal-head">
+          <span class="badge-canal badge-meta-em">📘 Meta Ads</span>
+          <h3>Campañas activas</h3>
+        </div>
+        <div class="pres-row">
+          <label>Presupuesto Meta e-Markeed:</label>
+          <input type="number" id="pres-meta-em" value="0" min="0" step="100" oninput="recalc()">
+          <span>MXN</span>
+        </div>
+        <table id="tblEmMetaActivas">
+          <thead><tr>
+            <th>Campaña</th>
+            <th>Gasto real</th><th>Leads</th>
+            <th>Negocios</th><th>Cierres</th>
+            <th>CPL</th><th>CPN</th><th>CPA</th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot class="em"><tr>
+            <td class="label">TOTAL ACTIVAS</td>
+            <td id="em-ma-gasto">—</td><td id="em-ma-leads">—</td>
+            <td id="em-ma-neg">—</td><td id="em-ma-cierres">—</td>
+            <td id="em-ma-cpl">—</td><td id="em-ma-cpn">—</td><td id="em-ma-cpa">—</td>
+          </tr></tfoot>
+        </table>
+        <div>
+          <div class="pausadas-toggle" onclick="togglePausadas('em-meta')">
+            <span id="em-meta-icon">▶</span>
+            <span id="em-meta-lbl">Ver campañas pausadas / inactivas</span>
+          </div>
+          <div class="pausadas-container" id="em-meta-pausadas">
+            <table id="tblEmMetaPausadas" style="margin-top:8px;">
+              <thead><tr>
+                <th>Campaña</th><th>Gasto</th><th>Leads</th><th>Estado</th><th>Comentario / Motivo de pausa</th>
+              </tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="cards">
+        <div class="card gold"><div class="c-label">Presupuesto</div><div class="c-value" id="em-c-pres">—</div><div class="c-sub">MXN asignados</div></div>
+        <div class="card em"><div class="c-label">Gasto real</div><div class="c-value" id="em-c-gasto">—</div><div class="c-sub" id="em-c-vs">—</div></div>
+        <div class="card green"><div class="c-label">Leads</div><div class="c-value" id="em-c-leads">—</div><div class="c-sub" id="em-c-cpl">CPL —</div></div>
+        <div class="card em"><div class="c-label">Cierres</div><div class="c-value" id="em-c-cierres">—</div><div class="c-sub" id="em-c-cpa">CPA —</div></div>
+      </div>
+
+      <div class="dist">
+        <h4>Distribución del gasto por campaña — Meta</h4>
+        <div class="donut-wrap">
+          <canvas id="donut-em" width="130" height="130"></canvas>
+          <div class="donut-legend" id="legend-em"></div>
+        </div>
+        <div id="em-dist" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="stats3">
+        <div class="card green"><div class="c-label">Tasa de cierre</div><div class="c-value" id="em-tasa">—</div><div class="c-sub">Cierres ÷ leads</div></div>
+        <div class="card em"><div class="c-label">Negocio → cierre</div><div class="c-value" id="em-tasa-nc">—</div><div class="c-sub">Cierres ÷ negocios</div></div>
+        <div class="card gold"><div class="c-label">vs. presupuesto</div><div class="c-value" id="em-vspres">—</div><div class="c-sub" id="em-vspres-sub">—</div></div>
+      </div>
+    </div>
+  </div>
 
   <!-- CONSOLIDADO -->
-  <section class="block">
-    <div class="block-head"><h2>Resumen consolidado</h2><span class="tag averix">Averix</span><span class="tag emk" style="margin-left:4px;">e-Markeed</span></div>
-    <div class="cards">
-      <div class="card c-gold"><div class="c-label">Presupuesto combinado</div><div class="c-value" id="co-pres">—</div><div class="c-sub">Total asignado</div></div>
-      <div class="card c-navy"><div class="c-label">Gasto real</div><div class="c-value" id="co-gasto">—</div><div class="c-sub" id="co-gasto-sub">—</div></div>
-      <div class="card c-green"><div class="c-label">Leads totales</div><div class="c-value" id="co-leads">—</div><div class="c-sub" id="co-leads-sub">—</div></div>
-      <div class="card c-berry"><div class="c-label">Cierres totales</div><div class="c-value" id="co-cierres">—</div><div class="c-sub" id="co-cierres-sub">—</div></div>
+  <div class="consolidado">
+    <div class="consolidado-head"><h2>Resumen consolidado · Averix + e-Markeed</h2></div>
+    <div class="consolidado-body">
+      <div class="cards">
+        <div class="card gold"><div class="c-label">Presupuesto combinado</div><div class="c-value" id="co-pres">—</div><div class="c-sub">Total asignado</div></div>
+        <div class="card av"><div class="c-label">Gasto real total</div><div class="c-value" id="co-gasto">—</div><div class="c-sub" id="co-gasto-sub">—</div></div>
+        <div class="card green"><div class="c-label">Leads totales</div><div class="c-value" id="co-leads">—</div><div class="c-sub" id="co-leads-sub">—</div></div>
+        <div class="card em"><div class="c-label">Cierres totales</div><div class="c-value" id="co-cierres">—</div><div class="c-sub" id="co-cierres-sub">—</div></div>
+      </div>
     </div>
-  </section>
+  </div>
 </div>
 
-<!-- HISTORIAL -->
+<!-- TAB: HISTORIAL -->
 <div class="tab-panel" id="tab-historial">
-  <section class="block" style="margin-top:0;border-radius:0 14px 14px 14px;">
-    <div class="block-head"><h2>Historial de periodos</h2><span class="tag hist">Compartido</span></div>
-    <div class="block-sub">Snapshots guardados · visibles para todo el equipo</div>
-    <div id="hist-content"></div>
-  </section>
+  <div style="background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+    <div style="background:var(--av);padding:14px 20px;">
+      <h2 style="font-size:15px;font-weight:700;color:#fff;">Historial de periodos</h2>
+      <p style="font-size:10.5px;color:rgba(255,255,255,.7);margin-top:2px;">Snapshots compartidos con el equipo</p>
+    </div>
+    <div style="padding:20px;">
+      <div id="hist-content"></div>
+    </div>
+  </div>
 </div>
 
-<!-- TENDENCIAS -->
+<!-- TAB: TENDENCIAS -->
 <div class="tab-panel" id="tab-grafica">
-  <section class="block" style="margin-top:0;border-radius:0 14px 14px 14px;">
-    <div class="block-head"><h2>Tendencias</h2><span class="tag hist">Histórico</span></div>
-    <div id="chart-content"><div class="empty-state"><div class="big">📈</div>Cargando tendencias...</div></div>
-  </section>
+  <div style="background:var(--white);border:1px solid var(--line);border-radius:12px;overflow:hidden;">
+    <div style="background:var(--av);padding:14px 20px;">
+      <h2 style="font-size:15px;font-weight:700;color:#fff;">Tendencias</h2>
+      <p style="font-size:10.5px;color:rgba(255,255,255,.7);margin-top:2px;">Evolución de métricas por periodo guardado</p>
+    </div>
+    <div style="padding:20px;">
+      <div id="chart-content"><div class="empty-state"><div class="big">📈</div>Cargando...</div></div>
+    </div>
+  </div>
 </div>
 
-<div class="note-foot" style="text-align:center;margin-top:6px;">e-Markeed · Panel Averix México · 2026</div>
-</div>
+<div class="note-foot">e-Markeed · Panel Averix México · 2026</div>
 
 <script>
-// ── Historial preload (Mar, Abr, May 2026) ──
-const HISTORIAL_PRELOAD = [
-  {
-    nombre:"Marzo 2026", desde:"2026-03-01", hasta:"2026-03-31", ts:1743465600000,
-    avMetaCamps:[
-      {canal:"Vendia Formulario Clientes potenciales", leads:15, gasto:3200, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Averix 20/3/26",                         leads:3,  gasto:800,  neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Comercio en WhatsApp - Vendia Duplicado", leads:1,  gasto:300,  neg:0, cierres:0, status:"ACTIVE"},
+// ══ HISTORIAL PRELOAD ══
+const HISTORIAL_PRELOAD=[
+  {nombre:"Marzo 2026",desde:"2026-03-01",hasta:"2026-03-31",ts:1743465600000,
+    avMetaActivas:[
+      {canal:"Vendia Formulario Clientes potenciales",leads:15,gasto:3200,neg:0,cierres:0,status:"PAUSED",comentario:""},
+      {canal:"Averix 20/3/26",leads:3,gasto:800,neg:0,cierres:0,status:"PAUSED",comentario:""},
+      {canal:"Comercio en WhatsApp - Vendia Duplicado",leads:1,gasto:300,neg:0,cierres:0,status:"ACTIVE",comentario:""},
     ],
-    emMetaCamps:[
-      {canal:"e-Markeed Impulsa Tu negocio 26",         leads:40, gasto:4200, neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"e-Markeed Branding",                      leads:29, gasto:3029, neg:0, cierres:0, status:"ACTIVE"},
+    avMetaPausadas:[],emMetaActivas:[
+      {canal:"e-Markeed Impulsa Tu negocio 26",leads:40,gasto:4200,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"e-Markeed Branding",leads:29,gasto:3029,neg:0,cierres:0,status:"ACTIVE",comentario:""},
     ],
-    avGoogleLeads:0, avGoogleGasto:0,
-    presMetaAv:7000, presGoogleAv:7960, presMetaEm:0,
-  },
-  {
-    nombre:"Abril 2026", desde:"2026-04-01", hasta:"2026-04-30", ts:1746057600000,
-    avMetaCamps:[
-      {canal:"Averix Omnicanal",                        leads:8,  gasto:2800, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Averix 1/4/26",                           leads:4,  gasto:1200, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Averix 20/3/26",                          leads:3,  gasto:900,  neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Vendia Formulario Clientes potenciales",  leads:4,  gasto:1100, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Comercio en WhatsApp - Vendia Duplicado", leads:1,  gasto:300,  neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"Omia Decidores B2B",                      leads:1,  gasto:300,  neg:0, cierres:0, status:"PAUSED"},
+    emMetaPausadas:[],avGoogleLeads:0,avGoogleGasto:0,presMetaAv:7000,presGoogleAv:7960,presMetaEm:0},
+  {nombre:"Abril 2026",desde:"2026-04-01",hasta:"2026-04-30",ts:1746057600000,
+    avMetaActivas:[
+      {canal:"Averix Omnicanal",leads:8,gasto:2800,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Averix 1/4/26",leads:4,gasto:1200,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Vendia Formulario Clientes potenciales",leads:4,gasto:1100,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Comercio en WhatsApp - Vendia Duplicado",leads:1,gasto:300,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Omia Decidores B2B",leads:1,gasto:300,neg:0,cierres:0,status:"ACTIVE",comentario:""},
     ],
-    emMetaCamps:[
-      {canal:"e-Markeed Branding",                      leads:103, gasto:6000, neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"e-Markeed Impulsa Tu negocio 26",         leads:38,  gasto:3500, neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"Impulsa Tu negocio 26 - Copia",           leads:4,   gasto:800,  neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Video Branding 26",                       leads:3,   gasto:600,  neg:0, cierres:0, status:"PAUSED"},
+    avMetaPausadas:[
+      {canal:"Averix 20/3/26",leads:3,gasto:900,status:"PAUSED",comentario:"Campaña de prueba anterior, reemplazada por Averix 1/4/26"},
     ],
-    avGoogleLeads:4, avGoogleGasto:0,
-    presMetaAv:17577, presGoogleAv:11000, presMetaEm:18895,
-  },
-  {
-    nombre:"Mayo 2026", desde:"2026-05-01", hasta:"2026-05-31", ts:1748736000000,
-    avMetaCamps:[
-      {canal:"Comercio en WhatsApp",                    leads:65, gasto:5200, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Omia Decidores B2B",                      leads:13, gasto:2652, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Averix Omnicanal - Mayo Junio",           leads:8,  gasto:1998, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Averix Omnicanal Mayo 11",                leads:7,  gasto:1200, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Averix LeadGen Omnicanal May26",          leads:6,  gasto:1000, neg:0, cierres:0, status:"PAUSED"},
-      {canal:"Comercio en WhatsApp - Vendia Duplicado", leads:4,  gasto:800,  neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"Averix Omnicanal",                        leads:3,  gasto:600,  neg:0, cierres:0, status:"PAUSED"},
+    emMetaActivas:[
+      {canal:"e-Markeed Branding",leads:103,gasto:6000,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"e-Markeed Impulsa Tu negocio 26",leads:38,gasto:3500,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Video Branding 26",leads:3,gasto:600,neg:0,cierres:0,status:"ACTIVE",comentario:""},
     ],
-    emMetaCamps:[
-      {canal:"e-Markeed Branding",                      leads:106, gasto:3029, neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"e-Markeed Impulsa Tu negocio 26",         leads:96,  gasto:3896, neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"Emarkeed-Servicios",                      leads:28,  gasto:2740, neg:0, cierres:0, status:"ACTIVE"},
-      {canal:"e-Markeed Impulsa Tu negocio 26 filtrado",leads:9,   gasto:1724, neg:0, cierres:0, status:"ACTIVE"},
+    emMetaPausadas:[
+      {canal:"Impulsa Tu negocio 26 - Copia",leads:4,gasto:800,status:"PAUSED",comentario:"Duplicado de prueba, consolidado en campaña principal"},
     ],
-    avGoogleLeads:6, avGoogleGasto:0,
-    presMetaAv:17342, presGoogleAv:1766, presMetaEm:7494,
-  },
+    avGoogleLeads:4,avGoogleGasto:0,presMetaAv:17577,presGoogleAv:11000,presMetaEm:18895},
+  {nombre:"Mayo 2026",desde:"2026-05-01",hasta:"2026-05-31",ts:1748736000000,
+    avMetaActivas:[
+      {canal:"Comercio en WhatsApp - Vendia Duplicado",leads:4,gasto:800,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Averix Omnicanal - Mayo Junio",leads:8,gasto:1998,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Omia Decidores B2B",leads:13,gasto:2652,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+    ],
+    avMetaPausadas:[
+      {canal:"Comercio en WhatsApp",leads:65,gasto:5200,status:"PAUSED",comentario:"Pausada al iniciar Vendia Duplicado con mejor rendimiento"},
+      {canal:"Averix Omnicanal Mayo 11",leads:7,gasto:1200,status:"PAUSED",comentario:"Reemplazada por la versión Mayo Junio"},
+      {canal:"Averix LeadGen Omnicanal May26",leads:6,gasto:1000,status:"PAUSED",comentario:"Prueba de formato, no se escala"},
+    ],
+    emMetaActivas:[
+      {canal:"e-Markeed Branding - Copia",leads:106,gasto:3029,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"e-Markeed Impulsa Tu negocio 26",leads:96,gasto:3896,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"e-Markeed Impulsa Tu negocio 26 filtrado",leads:9,gasto:1724,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+    ],
+    emMetaPausadas:[
+      {canal:"Emarkeed-Servicios",leads:28,gasto:2740,status:"PAUSED",comentario:"Segmento pausado para revisar ángulo creativo"},
+    ],
+    avGoogleLeads:6,avGoogleGasto:0,presMetaAv:17342,presGoogleAv:1766,presMetaEm:7494},
 ];
 
-// ── Estado ──
-let data = { avMeta:[], avGoogle:[], emMeta:[] };
-let historial = [];
-let editingIdx = null;
+// ══ PALETAS ══
+const PAL_AV=["#1A56C4","#2563EB","#3B82F6","#60A5FA","#93C5FD","#1D4ED8","#1E40AF","#0EA5E9","#0284C7","#0369A1"];
+const PAL_EM=["#7C28C8","#9333EA","#A855F7","#C026D3","#D946EF","#7C3AED","#6D28D9","#8B5CF6","#EC4899","#BE185D"];
 
-// ── Storage compartido ──
+// ══ ESTADO ══
+let data={avMetaActivas:[],avMetaPausadas:[],emMetaActivas:[],emMetaPausadas:[],avGoogle:[]};
+let historial=[];let editingIdx=null;
+
 async function loadHistorial(){
-  try{const r=await window.storage.get("hs-panel-v5",true);if(r)historial=JSON.parse(r.value);}catch(e){historial=[];}
-  // Inyectar preload si no existen
-  for(const pre of HISTORIAL_PRELOAD){
-    if(!historial.find(h=>h.nombre===pre.nombre)) historial.unshift(pre);
-  }
+  try{const r=await window.storage.get("panel-v7",true);if(r)historial=JSON.parse(r.value);}catch(e){historial=[];}
+  for(const p of HISTORIAL_PRELOAD){if(!historial.find(h=>h.nombre===p.nombre))historial.unshift(p);}
   renderHistorial();
 }
-async function saveHistorial(){
-  try{await window.storage.set("hs-panel-v5",JSON.stringify(historial),true);}catch(e){}
+async function saveHistorial(){try{await window.storage.set("panel-v7",JSON.stringify(historial),true);}catch(e){}}
+
+const fmtMXN=n=>"$"+n.toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtMXN0=n=>"$"+Math.round(n).toLocaleString("es-MX");
+const fmtPct=n=>n.toLocaleString("es-MX",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
+const safeDiv=(a,b)=>b>0?a/b:null;
+const cell=v=>v===null?"—":fmtMXN(v);
+const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+const sumC=rows=>rows.reduce((a,r)=>({gasto:a.gasto+(r.gasto||0),leads:a.leads+(r.leads||0),neg:a.neg+(r.neg||0),cierres:a.cierres+(r.cierres||0)}),{gasto:0,leads:0,neg:0,cierres:0});
+
+function sbadge(s){
+  if(s==="ACTIVE")return'<span class="badge-activa">Activa</span>';
+  if(s==="PAUSED"||s==="CAMPAIGN_PAUSED")return'<span class="badge-pausada">Pausada</span>';
+  return'<span class="badge-inactiva">Inactiva</span>';
 }
+function setCalc(id,val){const el=document.getElementById(id);if(!el)return;el.textContent=val===null?"—":fmtMXN(val);el.classList.toggle("dim",val===null);}
 
-// ── Fmt ──
-const fmtMXN  = n=>"$"+n.toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtMXN0 = n=>"$"+Math.round(n).toLocaleString("es-MX");
-const fmtPct  = n=>n.toLocaleString("es-MX",{minimumFractionDigits:1,maximumFractionDigits:1})+"%";
-const safeDiv = (a,b)=>b>0?a/b:null;
-const cell    = v=>v===null?"—":fmtMXN(v);
-const set     = (id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-const sumC    = rows=>rows.reduce((a,r)=>({gasto:a.gasto+(r.gasto||0),leads:a.leads+(r.leads||0),neg:a.neg+(r.neg||0),cierres:a.cierres+(r.cierres||0)}),{gasto:0,leads:0,neg:0,cierres:0});
-
-// ── Status badge ──
-function statusBadge(status){
-  if(!status||status==="Google"||status==="TikTok") return "";
-  const map={ACTIVE:{l:"Activa",c:"#2C8A5B",b:"#E6F4ED"},PAUSED:{l:"Pausada",c:"#92400e",b:"#FFFBEB"},DELETED:{l:"Eliminada",c:"#991b1b",b:"#FEF2F2"},ARCHIVED:{l:"Archivada",c:"#6B7280",b:"#F2F3F7"},CAMPAIGN_PAUSED:{l:"Pausada",c:"#92400e",b:"#FFFBEB"}};
-  const s=map[status]||{l:status,c:"#6B7280",b:"#F2F3F7"};
-  return `<span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;margin-left:4px;color:${s.c};background:${s.b};">${s.l}</span>`;
-}
-
-// ── Build tables ──
-function buildMetaTable(key, rows){
-  const id = key==="av" ? "#tblAvMeta tbody" : "#tblEmMeta tbody";
-  const tbody=document.querySelector(id); tbody.innerHTML="";
-  rows.forEach((row,i)=>{
+// ══ BUILD TABLES ══
+function buildActivas(sel,rows,kp){
+  const tb=document.querySelector(sel);if(!tb)return;tb.innerHTML="";
+  rows.forEach((r,i)=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td class="label">${row.canal}${statusBadge(row.status)}</td>
-      <td style="color:var(--navy);font-weight:600;">${fmtMXN(row.gasto||0)}</td>
-      <td class="hs">${row.leads||0}</td>
-      <td><input type="number" min="0" step="1" value="${row.neg||0}" data-key="${key}Meta" data-i="${i}" data-f="neg"></td>
-      <td><input type="number" min="0" step="1" value="${row.cierres||0}" data-key="${key}Meta" data-i="${i}" data-f="cierres"></td>
-      <td class="calc" id="${key}Meta-cpl-${i}">—</td>
-      <td class="calc" id="${key}Meta-cpn-${i}">—</td>
-      <td class="calc" id="${key}Meta-cpa-${i}">—</td>`;
-    tbody.appendChild(tr);
+    tr.innerHTML=`<td class="label">${r.canal}</td>
+      <td class="gasto-real">${fmtMXN(r.gasto||0)}</td>
+      <td class="hs">${r.leads||0}</td>
+      <td><input type="number" min="0" step="1" value="${r.neg||0}" data-key="${kp}" data-i="${i}" data-f="neg"></td>
+      <td><input type="number" min="0" step="1" value="${r.cierres||0}" data-key="${kp}" data-i="${i}" data-f="cierres"></td>
+      <td class="calc" id="${kp}-cpl-${i}">—</td>
+      <td class="calc" id="${kp}-cpn-${i}">—</td>
+      <td class="calc" id="${kp}-cpa-${i}">—</td>`;
+    tb.appendChild(tr);
   });
 }
 
-function buildGoogleTable(rows){
-  const tbody=document.querySelector("#tblAvGoogle tbody"); tbody.innerHTML="";
-  rows.forEach((row,i)=>{
+function buildPausadas(sel,rows,kp){
+  const tb=document.querySelector(sel);if(!tb)return;tb.innerHTML="";
+  rows.forEach((r,i)=>{
     const tr=document.createElement("tr");
-    tr.innerHTML=`
-      <td class="label">${row.canal}</td>
-      <td><input class="inv" type="number" min="0" step="0.01" value="${row.gasto||0}" data-key="avGoogle" data-i="${i}" data-f="gasto"></td>
-      <td class="hs">${row.leads||0}</td>
-      <td><input type="number" min="0" step="1" value="${row.neg||0}" data-key="avGoogle" data-i="${i}" data-f="neg"></td>
-      <td><input type="number" min="0" step="1" value="${row.cierres||0}" data-key="avGoogle" data-i="${i}" data-f="cierres"></td>
+    tr.innerHTML=`<td class="label">${r.canal}</td>
+      <td class="gasto-real">${fmtMXN(r.gasto||0)}</td>
+      <td class="hs">${r.leads||0}</td>
+      <td>${sbadge(r.status)}</td>
+      <td><textarea class="comentario-input" rows="1" placeholder="¿Por qué se pausó?" oninput="data.${kp}[${i}].comentario=this.value">${r.comentario||""}</textarea></td>`;
+    tb.appendChild(tr);
+  });
+}
+
+function buildGoogle(rows){
+  const tb=document.querySelector("#tblAvGoogle tbody");if(!tb)return;tb.innerHTML="";
+  rows.forEach((r,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td class="label">${r.canal}</td>
+      <td><input type="number" min="0" step="0.01" value="${r.gasto||0}" data-key="avGoogle" data-i="${i}" data-f="gasto"></td>
+      <td class="hs">${r.leads||0}</td>
+      <td><input type="number" min="0" step="1" value="${r.neg||0}" data-key="avGoogle" data-i="${i}" data-f="neg"></td>
+      <td><input type="number" min="0" step="1" value="${r.cierres||0}" data-key="avGoogle" data-i="${i}" data-f="cierres"></td>
       <td class="calc" id="avGoogle-cpl-${i}">—</td>
       <td class="calc" id="avGoogle-cpn-${i}">—</td>
       <td class="calc" id="avGoogle-cpa-${i}">—</td>`;
-    tbody.appendChild(tr);
+    tb.appendChild(tr);
   });
 }
-
-function setCalc(id,val){const el=document.getElementById(id);if(!el)return;el.textContent=val===null?"—":fmtMXN(val);el.classList.toggle("dim",val===null);}
 
 function attachInputs(){
   document.querySelectorAll('input[type=number][data-key]').forEach(inp=>{
     inp.addEventListener("input",e=>{
       const{key,i,f}=e.target.dataset;
       let v=parseFloat(e.target.value);if(isNaN(v)||v<0)v=0;
-      if(key==="avMeta") data.avMeta[parseInt(i)][f]=v;
-      else if(key==="emMeta") data.emMeta[parseInt(i)][f]=v;
-      else if(key==="avGoogle") data.avGoogle[parseInt(i)][f]=v;
-      recalc();
+      if(data[key])data[key][parseInt(i)][f]=v;recalc();
     });
   });
 }
 
-// ── Donut ──
-function drawDonut(cid,lid,rows,total){
+function togglePausadas(id){
+  const c=document.getElementById(id+"-pausadas");
+  const ic=document.getElementById(id+"-icon");
+  const lb=document.getElementById(id+"-lbl");
+  const open=c.classList.toggle("open");
+  ic.textContent=open?"▼":"▶";
+  const n=id==="av-meta"?data.avMetaPausadas.length:data.emMetaPausadas.length;
+  lb.textContent=open?`Ocultar pausadas / inactivas (${n})`:`Ver campañas pausadas / inactivas (${n})`;
+}
+
+// ══ DONUT ══
+function drawDonut(cid,lid,rows,total,pal){
   const cv=document.getElementById(cid);if(!cv)return;
-  const S=140,cx=70,cy=70,R=64,r=40;
-  cv.width=S;cv.height=S;
+  const S=130,cx=65,cy=65,R=58,r=36;cv.width=S;cv.height=S;
   const ctx=cv.getContext("2d");ctx.clearRect(0,0,S,S);
-  const COLORS=["#A8336E","#C8336E","#E8537E","#FF638E","#1E2761","#2A3470","#3D4D80","#C9962F","#2C8A5B","#6B7280"];
   const valid=rows.filter(x=>(x.gasto||0)>0);
-  if(!valid.length||!total){ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fillStyle="#E5E7EB";ctx.fill();ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();return;}
-  let start=-Math.PI/2;
-  valid.forEach((x,idx)=>{const sl=(x.gasto/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,start,start+sl);ctx.closePath();ctx.fillStyle=COLORS[idx%COLORS.length];ctx.fill();start+=sl;});
+  if(!valid.length||!total){
+    ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.fillStyle=var2("#E5E7EB");ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle="#F8F9FB";ctx.fill();return;
+  }
+  let s=-Math.PI/2;
+  valid.forEach((x,i)=>{const sl=(x.gasto/total)*Math.PI*2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,R,s,s+sl);ctx.closePath();ctx.fillStyle=pal[i%pal.length];ctx.fill();s+=sl;});
   ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();
-  ctx.fillStyle="#2A2A3E";ctx.font="bold 9.5px Poppins,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(fmtMXN0(total),cx,cy);
+  ctx.fillStyle="#111827";ctx.font="bold 8.5px Poppins,sans-serif";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(fmtMXN0(total),cx,cy);
   const leg=document.getElementById(lid);if(!leg)return;leg.innerHTML="";
-  rows.forEach((x,idx)=>{const pct=total>0?(x.gasto||0)/total*100:0;const d=document.createElement("div");d.className="leg-item";d.innerHTML=`<div class="leg-dot" style="background:${COLORS[idx%COLORS.length]}"></div><span class="leg-name">${x.canal}</span><span class="leg-pct" style="color:${COLORS[idx%COLORS.length]}">${fmtPct(pct)}</span>`;leg.appendChild(d);});
+  rows.forEach((x,i)=>{const pct=total>0?(x.gasto||0)/total*100:0;const d=document.createElement("div");d.className="leg-item";d.innerHTML=`<div class="leg-dot" style="background:${pal[i%pal.length]}"></div><span class="leg-name">${x.canal}</span><span class="leg-pct" style="color:${pal[i%pal.length]}">${fmtPct(pct)}</span>`;leg.appendChild(d);});
 }
+function var2(v){return v;}
 
-function buildDist(hid,rows,total){
-  const COLORS=["#A8336E","#C8336E","#E8537E","#FF638E","#1E2761","#2A3470","#C9962F","#2C8A5B","#6B7280"];
+function buildDist(hid,rows,total,pal){
   const h=document.getElementById(hid);if(!h)return;h.innerHTML="";
-  rows.forEach((x,idx)=>{const pct=total>0?(x.gasto||0)/total*100:0;const d=document.createElement("div");d.className="bar-row";d.innerHTML=`<div class="bname" title="${x.canal}">${x.canal}</div><div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${COLORS[idx%COLORS.length]};"></div></div><div class="bpct">${fmtPct(pct)}</div><div class="bamt">${fmtMXN(x.gasto||0)}</div>`;h.appendChild(d);});
+  rows.forEach((x,i)=>{const pct=total>0?(x.gasto||0)/total*100:0;const d=document.createElement("div");d.className="bar-row";d.innerHTML=`<div class="bname" title="${x.canal}">${x.canal}</div><div class="bar-track"><div class="bar-fill" style="width:${pct.toFixed(1)}%;background:${pal[i%pal.length]};"></div></div><div class="bpct">${fmtPct(pct)}</div><div class="bamt">${fmtMXN(x.gasto||0)}</div>`;h.appendChild(d);});
 }
 
-// ── Recalc ──
-function recalcPresupuesto(){ recalc(); }
-
+// ══ RECALC ══
 function recalc(){
-  const presMetaAv  = parseFloat(document.getElementById("pres-meta-av")?.value)||0;
-  const presGoogleAv= parseFloat(document.getElementById("pres-google-av")?.value)||0;
-  const gastoGoogleAv= parseFloat(document.getElementById("gasto-google-av")?.value)||0;
-  const presMetaEm  = parseFloat(document.getElementById("pres-meta-em")?.value)||0;
+  const pMAv=parseFloat(document.getElementById("pres-meta-av")?.value)||0;
+  const pGAv=parseFloat(document.getElementById("pres-google-av")?.value)||0;
+  const gGAv=parseFloat(document.getElementById("gasto-google-av")?.value)||0;
+  const pMEm=parseFloat(document.getElementById("pres-meta-em")?.value)||0;
 
-  // Averix Meta
-  data.avMeta.forEach((row,i)=>{
-    setCalc(`avMeta-cpl-${i}`,safeDiv(row.gasto||0,row.leads||0));
-    setCalc(`avMeta-cpn-${i}`,safeDiv(row.gasto||0,row.neg||0));
-    setCalc(`avMeta-cpa-${i}`,safeDiv(row.gasto||0,row.cierres||0));
+  data.avMetaActivas.forEach((r,i)=>{
+    setCalc(`avMetaActivas-cpl-${i}`,safeDiv(r.gasto||0,r.leads||0));
+    setCalc(`avMetaActivas-cpn-${i}`,safeDiv(r.gasto||0,r.neg||0));
+    setCalc(`avMetaActivas-cpa-${i}`,safeDiv(r.gasto||0,r.cierres||0));
   });
-  const am=sumC(data.avMeta);
-  set("av-meta-gasto",fmtMXN(am.gasto));set("av-meta-leads",am.leads);set("av-meta-neg",am.neg);set("av-meta-cierres",am.cierres);
-  set("av-meta-cpl",cell(safeDiv(am.gasto,am.leads)));set("av-meta-cpn",cell(safeDiv(am.gasto,am.neg)));set("av-meta-cpa",cell(safeDiv(am.gasto,am.cierres)));
-  drawDonut("donut-av","legend-av",data.avMeta,am.gasto);buildDist("av-dist",data.avMeta,am.gasto);
+  const am=sumC(data.avMetaActivas);
+  set("av-ma-gasto",fmtMXN(am.gasto));set("av-ma-leads",am.leads);set("av-ma-neg",am.neg);set("av-ma-cierres",am.cierres);
+  set("av-ma-cpl",cell(safeDiv(am.gasto,am.leads)));set("av-ma-cpn",cell(safeDiv(am.gasto,am.neg)));set("av-ma-cpa",cell(safeDiv(am.gasto,am.cierres)));
+  drawDonut("donut-av","legend-av",data.avMetaActivas,am.gasto,PAL_AV);
+  buildDist("av-dist",data.avMetaActivas,am.gasto,PAL_AV);
 
-  // Averix Google
-  data.avGoogle.forEach((row,i)=>{
-    setCalc(`avGoogle-cpl-${i}`,safeDiv(row.gasto||0,row.leads||0));
-    setCalc(`avGoogle-cpn-${i}`,safeDiv(row.gasto||0,row.neg||0));
-    setCalc(`avGoogle-cpa-${i}`,safeDiv(row.gasto||0,row.cierres||0));
+  data.avGoogle.forEach((r,i)=>{
+    setCalc(`avGoogle-cpl-${i}`,safeDiv(r.gasto||0,r.leads||0));
+    setCalc(`avGoogle-cpn-${i}`,safeDiv(r.gasto||0,r.neg||0));
+    setCalc(`avGoogle-cpa-${i}`,safeDiv(r.gasto||0,r.cierres||0));
   });
-  const ag=sumC(data.avGoogle);
-  ag.gasto = gastoGoogleAv; // gasto Google es el campo manual
-  set("av-google-gasto",fmtMXN(ag.gasto));set("av-google-leads",ag.leads);set("av-google-neg",ag.neg);set("av-google-cierres",ag.cierres);
-  set("av-google-cpl",cell(safeDiv(ag.gasto,ag.leads)));set("av-google-cpn",cell(safeDiv(ag.gasto,ag.neg)));set("av-google-cpa",cell(safeDiv(ag.gasto,ag.cierres)));
+  const ag=sumC(data.avGoogle);ag.gasto=gGAv;
+  set("av-g-gasto",fmtMXN(ag.gasto));set("av-g-leads",ag.leads);set("av-g-neg",ag.neg);set("av-g-cierres",ag.cierres);
+  set("av-g-cpl",cell(safeDiv(ag.gasto,ag.leads)));set("av-g-cpn",cell(safeDiv(ag.gasto,ag.neg)));set("av-g-cpa",cell(safeDiv(ag.gasto,ag.cierres)));
 
-  // Totales Averix
-  const avTotalPres = presMetaAv + presGoogleAv;
-  const avTotalGasto = am.gasto + ag.gasto;
-  const avTotalLeads = am.leads + ag.leads;
-  const avTotalNeg = am.neg + ag.neg;
-  const avTotalCierres = am.cierres + ag.cierres;
-  set("av-card-pres",fmtMXN(avTotalPres));set("av-card-gasto",fmtMXN(avTotalGasto));set("av-card-leads",avTotalLeads);set("av-card-cierres",avTotalCierres);
-  set("av-card-cpl","CPL "+cell(safeDiv(avTotalGasto,avTotalLeads)));
-  const diffAv=avTotalGasto-avTotalPres,sAv=diffAv>=0?"+":"−";
-  set("av-card-vsbudget",sAv+fmtMXN0(Math.abs(diffAv))+" vs presupuesto");
-  set("av-tasa",fmtPct(avTotalLeads>0?avTotalCierres/avTotalLeads*100:0));
-  set("av-tasa-nc",fmtPct(avTotalNeg>0?avTotalCierres/avTotalNeg*100:0));
-  set("av-vspres",sAv+fmtMXN0(Math.abs(diffAv)));
-  set("av-vspres-sub",sAv+fmtPct(Math.abs(avTotalPres>0?diffAv/avTotalPres*100:0))+(Math.abs(avTotalPres>0?diffAv/avTotalPres*100:0)<=10?" · on target":" · revisar"));
+  const avTP=pMAv+pGAv,avTG=am.gasto+ag.gasto,avTL=am.leads+ag.leads,avTN=am.neg+ag.neg,avTC=am.cierres+ag.cierres;
+  set("av-c-pres",fmtMXN(avTP));set("av-c-gasto",fmtMXN(avTG));set("av-c-leads",avTL);set("av-c-cierres",avTC);
+  set("av-c-cpl","CPL "+cell(safeDiv(avTG,avTL)));
+  const dAv=avTG-avTP,sAv=dAv>=0?"+":"−";
+  set("av-c-vs",sAv+fmtMXN0(Math.abs(dAv))+" vs presupuesto");
+  set("av-tasa",fmtPct(avTL>0?avTC/avTL*100:0));
+  set("av-tasa-nc",fmtPct(avTN>0?avTC/avTN*100:0));
+  set("av-vspres",sAv+fmtMXN0(Math.abs(dAv)));
+  set("av-vspres-sub",sAv+fmtPct(Math.abs(avTP>0?dAv/avTP*100:0))+(Math.abs(avTP>0?dAv/avTP*100:0)<=10?" · on target":" · revisar"));
 
-  // e-Markeed Meta
-  data.emMeta.forEach((row,i)=>{
-    setCalc(`emMeta-cpl-${i}`,safeDiv(row.gasto||0,row.leads||0));
-    setCalc(`emMeta-cpn-${i}`,safeDiv(row.gasto||0,row.neg||0));
-    setCalc(`emMeta-cpa-${i}`,safeDiv(row.gasto||0,row.cierres||0));
+  data.emMetaActivas.forEach((r,i)=>{
+    setCalc(`emMetaActivas-cpl-${i}`,safeDiv(r.gasto||0,r.leads||0));
+    setCalc(`emMetaActivas-cpn-${i}`,safeDiv(r.gasto||0,r.neg||0));
+    setCalc(`emMetaActivas-cpa-${i}`,safeDiv(r.gasto||0,r.cierres||0));
   });
-  const em=sumC(data.emMeta);
-  set("em-meta-gasto",fmtMXN(em.gasto));set("em-meta-leads",em.leads);set("em-meta-neg",em.neg);set("em-meta-cierres",em.cierres);
-  set("em-meta-cpl",cell(safeDiv(em.gasto,em.leads)));set("em-meta-cpn",cell(safeDiv(em.gasto,em.neg)));set("em-meta-cpa",cell(safeDiv(em.gasto,em.cierres)));
-  drawDonut("donut-em","legend-em",data.emMeta,em.gasto);buildDist("em-dist",data.emMeta,em.gasto);
-  set("em-card-pres",fmtMXN(presMetaEm));set("em-card-gasto",fmtMXN(em.gasto));set("em-card-leads",em.leads);set("em-card-cierres",em.cierres);
-  set("em-card-cpl","CPL "+cell(safeDiv(em.gasto,em.leads)));
-  const diffEm=em.gasto-presMetaEm,sEm=diffEm>=0?"+":"−";
-  set("em-card-vsbudget",sEm+fmtMXN0(Math.abs(diffEm))+" vs presupuesto");
+  const em=sumC(data.emMetaActivas);
+  set("em-ma-gasto",fmtMXN(em.gasto));set("em-ma-leads",em.leads);set("em-ma-neg",em.neg);set("em-ma-cierres",em.cierres);
+  set("em-ma-cpl",cell(safeDiv(em.gasto,em.leads)));set("em-ma-cpn",cell(safeDiv(em.gasto,em.neg)));set("em-ma-cpa",cell(safeDiv(em.gasto,em.cierres)));
+  drawDonut("donut-em","legend-em",data.emMetaActivas,em.gasto,PAL_EM);
+  buildDist("em-dist",data.emMetaActivas,em.gasto,PAL_EM);
+  set("em-c-pres",fmtMXN(pMEm));set("em-c-gasto",fmtMXN(em.gasto));set("em-c-leads",em.leads);set("em-c-cierres",em.cierres);
+  set("em-c-cpl","CPL "+cell(safeDiv(em.gasto,em.leads)));
+  const dEm=em.gasto-pMEm,sEm=dEm>=0?"+":"−";
+  set("em-c-vs",sEm+fmtMXN0(Math.abs(dEm))+" vs presupuesto");
   set("em-tasa",fmtPct(em.leads>0?em.cierres/em.leads*100:0));
   set("em-tasa-nc",fmtPct(em.neg>0?em.cierres/em.neg*100:0));
-  set("em-vspres",sEm+fmtMXN0(Math.abs(diffEm)));
-  set("em-vspres-sub",sEm+fmtPct(Math.abs(presMetaEm>0?diffEm/presMetaEm*100:0))+(Math.abs(presMetaEm>0?diffEm/presMetaEm*100:0)<=10?" · on target":" · revisar"));
+  set("em-vspres",sEm+fmtMXN0(Math.abs(dEm)));
+  set("em-vspres-sub",sEm+fmtPct(Math.abs(pMEm>0?dEm/pMEm*100:0))+(Math.abs(pMEm>0?dEm/pMEm*100:0)<=10?" · on target":" · revisar"));
 
-  // Consolidado
-  const coGasto=avTotalGasto+em.gasto;const coLeads=avTotalLeads+em.leads;
-  const coCierres=avTotalCierres+em.cierres;const coPres=avTotalPres+presMetaEm;
-  set("co-pres",fmtMXN(coPres));set("co-gasto",fmtMXN(coGasto));
-  set("co-leads",coLeads);set("co-cierres",coCierres);
-  set("co-gasto-sub",`${fmtMXN(avTotalGasto)} Averix · ${fmtMXN(em.gasto)} e-Markeed`);
-  set("co-leads-sub",`${avTotalLeads} Averix · ${em.leads} e-Markeed`);
-  set("co-cierres-sub",`${avTotalCierres} Averix · ${em.cierres} e-Markeed`);
+  const coG=avTG+em.gasto,coL=avTL+em.leads,coC=avTC+em.cierres,coP=avTP+pMEm;
+  set("co-pres",fmtMXN(coP));set("co-gasto",fmtMXN(coG));set("co-leads",coL);set("co-cierres",coC);
+  set("co-gasto-sub",`${fmtMXN(avTG)} Averix · ${fmtMXN(em.gasto)} e-Markeed`);
+  set("co-leads-sub",`${avTL} Averix · ${em.leads} e-Markeed`);
+  set("co-cierres-sub",`${avTC} Averix · ${em.cierres} e-Markeed`);
+
+  // Actualizar contadores pausadas
+  ["av-meta","em-meta"].forEach(id=>{
+    const n=id==="av-meta"?data.avMetaPausadas.length:data.emMetaPausadas.length;
+    const lb=document.getElementById(id+"-lbl");if(!lb)return;
+    const open=document.getElementById(id+"-pausadas").classList.contains("open");
+    lb.textContent=open?`Ocultar pausadas / inactivas (${n})`:`Ver campañas pausadas / inactivas (${n})`;
+  });
 }
 
-// ── Sincronizar ──
+// ══ SINCRONIZAR ══
 async function sincronizar(){
   const fi=document.getElementById("fecha-inicio").value;
   const ff=document.getElementById("fecha-fin").value;
   if(!fi||!ff||new Date(ff)<=new Date(fi)){alert("Revisa las fechas.");return;}
-  const btn=document.getElementById("btn-sync");
-  btn.disabled=true;
-  showStatus("loading","Consultando Meta Ads API en tiempo real...");
+  const btn=document.getElementById("btn-sync");btn.disabled=true;
+  showStatus("loading","Consultando Meta Ads API...");
   const d1=new Date(fi).toLocaleDateString("es-MX",{day:"numeric",month:"short"});
   const d2=new Date(ff).toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"});
   try{
     const resp=await fetch(`https://averix-dashboard-api.vercel.app/api/leads?fi=${fi}&ff=${ff}`);
-    if(!resp.ok) throw new Error(`API error ${resp.status}`);
-    const d=await resp.json();
-    if(d.error) throw new Error(d.error);
-    // Campañas Meta Averix
-    data.avMeta=Object.entries(d.averix?.Meta||{})
-      .filter(([,v])=>v.leads>0||v.spend>0)
-      .map(([nombre,v])=>({canal:nombre,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status}));
-    // Campañas Meta e-Markeed
-    data.emMeta=Object.entries(d.emk?.Meta||{})
-      .filter(([,v])=>v.leads>0||v.spend>0)
-      .map(([nombre,v])=>({canal:nombre,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status}));
-    // Google (solo leads de HubSpot)
+    if(!resp.ok)throw new Error(`API ${resp.status}`);
+    const d=await resp.json();if(d.error)throw new Error(d.error);
+    const avM=d.averix?.Meta||{};const emM=d.emk?.Meta||{};
+    data.avMetaActivas=Object.entries(avM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0))
+      .map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status,comentario:""}));
+    data.avMetaPausadas=Object.entries(avM).filter(([,v])=>v.status!=="ACTIVE")
+      .map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:""}));
+    data.emMetaActivas=Object.entries(emM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0))
+      .map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status,comentario:""}));
+    data.emMetaPausadas=Object.entries(emM).filter(([,v])=>v.status!=="ACTIVE")
+      .map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:""}));
     data.avGoogle=[{canal:"Google Ads",gasto:0,leads:d.totales?.averix?.Google||0,neg:0,cierres:0}];
-    buildMetaTable("av",data.avMeta);
-    buildMetaTable("em",data.emMeta);
-    buildGoogleTable(data.avGoogle);
-    attachInputs(); recalc();
+    buildActivas("#tblAvMetaActivas tbody",data.avMetaActivas,"avMetaActivas");
+    buildPausadas("#tblAvMetaPausadas tbody",data.avMetaPausadas,"avMetaPausadas");
+    buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
+    buildPausadas("#tblEmMetaPausadas tbody",data.emMetaPausadas,"emMetaPausadas");
+    buildGoogle(data.avGoogle);attachInputs();recalc();
     const tAv=(d.totales?.averix?.Meta||0)+(d.totales?.averix?.Google||0);
     const tEm=d.totales?.emk?.Meta||0;
-    showStatus("ok",`✅ Meta Ads API · ${d1}–${d2} · Averix: ${tAv} leads · e-Markeed: ${tEm} leads`);
+    showStatus("ok",`✅ ${d1}–${d2} · Averix: ${tAv} leads (${data.avMetaActivas.length} campañas activas) · e-Markeed: ${tEm} leads (${data.emMetaActivas.length} activas)`);
   }catch(err){
-    console.warn("API falló:",err.message);
-    data.avMeta=[]; data.emMeta=[]; data.avGoogle=[{canal:"Google Ads",gasto:0,leads:0,neg:0,cierres:0}];
-    buildMetaTable("av",data.avMeta);buildMetaTable("em",data.emMeta);buildGoogleTable(data.avGoogle);
-    attachInputs(); recalc();
-    showStatus("warn","⚠️ Error al consultar Meta Ads · "+err.message);
+    data.avMetaActivas=[];data.avMetaPausadas=[];data.emMetaActivas=[];data.emMetaPausadas=[];
+    data.avGoogle=[{canal:"Google Ads",gasto:0,leads:0,neg:0,cierres:0}];
+    buildActivas("#tblAvMetaActivas tbody",[]);buildPausadas("#tblAvMetaPausadas tbody",[]);
+    buildActivas("#tblEmMetaActivas tbody",[]);buildPausadas("#tblEmMetaPausadas tbody",[]);
+    buildGoogle(data.avGoogle);attachInputs();recalc();
+    showStatus("warn","⚠️ Error: "+err.message);
   }
   btn.disabled=false;
 }
 
-function showStatus(type,msg){
-  const el=document.getElementById("sync-status");
-  el.style.display="flex";el.className="sync-status "+type;
-  el.innerHTML=type==="loading"?`<div class="spinner"></div><span>${msg}</span>`:`<span>${msg}</span>`;
+function showStatus(t,m){
+  const el=document.getElementById("sync-status");el.style.display="flex";el.className="sync-status "+t;
+  el.innerHTML=t==="loading"?`<div class="spinner"></div><span>${m}</span>`:`<span>${m}</span>`;
 }
 
-// ── Guardar mes ──
+// ══ HISTORIAL ══
 async function guardarMes(){
-  const nombre=(document.getElementById("mes-nombre").value||"").trim();
-  if(!nombre){alert("Escribe un nombre para el periodo");return;}
+  const n=(document.getElementById("mes-nombre").value||"").trim();
+  if(!n){alert("Escribe un nombre");return;}
   const fi=document.getElementById("fecha-inicio").value;
   const ff=document.getElementById("fecha-fin").value;
-  const presMetaAv=parseFloat(document.getElementById("pres-meta-av")?.value)||0;
-  const presGoogleAv=parseFloat(document.getElementById("pres-google-av")?.value)||0;
-  const presMetaEm=parseFloat(document.getElementById("pres-meta-em")?.value)||0;
-  const snap={nombre,ts:Date.now(),desde:fi,hasta:ff,
-    avMetaCamps:JSON.parse(JSON.stringify(data.avMeta)),
-    emMetaCamps:JSON.parse(JSON.stringify(data.emMeta)),
+  const snap={nombre:n,ts:Date.now(),desde:fi,hasta:ff,
+    avMetaActivas:JSON.parse(JSON.stringify(data.avMetaActivas)),
+    avMetaPausadas:JSON.parse(JSON.stringify(data.avMetaPausadas)),
+    emMetaActivas:JSON.parse(JSON.stringify(data.emMetaActivas)),
+    emMetaPausadas:JSON.parse(JSON.stringify(data.emMetaPausadas)),
     avGoogleLeads:data.avGoogle[0]?.leads||0,
     avGoogleGasto:parseFloat(document.getElementById("gasto-google-av")?.value)||0,
-    presMetaAv,presGoogleAv,presMetaEm};
+    presMetaAv:parseFloat(document.getElementById("pres-meta-av")?.value)||0,
+    presGoogleAv:parseFloat(document.getElementById("pres-google-av")?.value)||0,
+    presMetaEm:parseFloat(document.getElementById("pres-meta-em")?.value)||0,
+  };
   if(editingIdx!==null){historial[editingIdx]=snap;editingIdx=null;document.getElementById("editing-badge").style.display="none";}
   else historial.push(snap);
   await saveHistorial();renderHistorial();renderGrafica();
   document.getElementById("mes-nombre").value="";
-  showTab("tab-historial",document.querySelectorAll(".tab-btn")[1]);
+  showTab("tab-historial",document.querySelectorAll(".nav-tab")[1]);
 }
 
-// ── Historial ──
-function snapTotales(snap){
-  const avMeta=snap.avMetaCamps||[];const emMeta=snap.emMetaCamps||[];
-  const amG=avMeta.reduce((a,r)=>({gasto:a.gasto+(r.gasto||0),leads:a.leads+(r.leads||0),neg:a.neg+(r.neg||0),cierres:a.cierres+(r.cierres||0)}),{gasto:0,leads:0,neg:0,cierres:0});
-  const emG=emMeta.reduce((a,r)=>({gasto:a.gasto+(r.gasto||0),leads:a.leads+(r.leads||0),neg:a.neg+(r.neg||0),cierres:a.cierres+(r.cierres||0)}),{gasto:0,leads:0,neg:0,cierres:0});
-  const avGG=snap.avGoogleGasto||0;const avGL=snap.avGoogleLeads||0;
-  return{
-    avGasto:amG.gasto+avGG, emGasto:emG.gasto,
-    avLeads:amG.leads+avGL, emLeads:emG.leads,
-    avNeg:amG.neg, emNeg:emG.neg,
-    avCierres:amG.cierres, emCierres:emG.cierres,
-    avPres:(snap.presMetaAv||0)+(snap.presGoogleAv||0),
-    emPres:snap.presMetaEm||0,
-  };
+function snapT(s){
+  const sumA=r=>r.reduce((a,x)=>({gasto:a.gasto+(x.gasto||0),leads:a.leads+(x.leads||0),neg:a.neg+(x.neg||0),cierres:a.cierres+(x.cierres||0)}),{gasto:0,leads:0,neg:0,cierres:0});
+  const av=sumA(s.avMetaActivas||[]);const em=sumA(s.emMetaActivas||[]);
+  return{avG:av.gasto+(s.avGoogleGasto||0),emG:em.gasto,avL:av.leads+(s.avGoogleLeads||0),emL:em.leads,
+    avN:av.neg,emN:em.neg,avC:av.cierres,emC:em.cierres,
+    avP:(s.presMetaAv||0)+(s.presGoogleAv||0),emP:s.presMetaEm||0};
 }
 
 function renderHistorial(){
   const host=document.getElementById("hist-content");
-  if(!historial.length){host.innerHTML='<div class="empty-state"><div class="big">📭</div>Aún no hay periodos guardados.</div>';return;}
+  if(!historial.length){host.innerHTML='<div class="empty-state"><div class="big">📭</div>Aún no hay periodos.</div>';return;}
   let html=`<div style="overflow-x:auto;"><table class="hist-tbl"><thead><tr>
     <th style="text-align:left;padding-left:10px;">Periodo</th><th>Fechas</th>
     <th>Ptto Av.</th><th>Gasto Av.</th><th>Ptto eMk.</th><th>Gasto eMk.</th>
-    <th>Leads</th><th>Negocios</th><th>Cierres</th><th>CPL</th><th>CPA</th><th>Acciones</th>
+    <th>Leads</th><th>Neg.</th><th>Cierres</th><th>CPL</th><th>CPA</th><th>Acciones</th>
   </tr></thead><tbody>`;
-  historial.forEach((snap,idx)=>{
-    const t=snapTotales(snap);
-    const tG=t.avGasto+t.emGasto,tL=t.avLeads+t.emLeads,tN=t.avNeg+t.emNeg,tC=t.avCierres+t.emCierres;
-    const periodo=snap.desde&&snap.hasta?`${snap.desde.slice(5)} → ${snap.hasta.slice(5)}`:"—";
-    html+=`<tr>
-      <td class="label">${snap.nombre}</td>
-      <td style="font-size:10.5px;color:var(--mute);">${periodo}</td>
-      <td>${fmtMXN(t.avPres)}</td><td style="color:var(--navy);font-weight:600;">${fmtMXN(t.avGasto)}</td>
-      <td>${fmtMXN(t.emPres)}</td><td style="color:var(--berry);font-weight:600;">${fmtMXN(t.emGasto)}</td>
-      <td>${tL}</td><td>${tN}</td><td>${tC}</td>
+  historial.forEach((s,idx)=>{
+    const t=snapT(s);const tG=t.avG+t.emG,tL=t.avL+t.emL,tN=t.avN+t.emN,tC=t.avC+t.emC;
+    const p=s.desde&&s.hasta?`${s.desde.slice(5)} → ${s.hasta.slice(5)}`:"—";
+    html+=`<tr><td class="label" style="color:var(--av);">${s.nombre}</td>
+      <td style="font-size:10px;color:var(--mute);">${p}</td>
+      <td style="color:var(--gold);font-size:11px;">${fmtMXN(t.avP)}</td>
+      <td style="color:var(--av);font-weight:600;font-size:11px;">${fmtMXN(t.avG)}</td>
+      <td style="color:var(--gold);font-size:11px;">${fmtMXN(t.emP)}</td>
+      <td style="color:var(--em);font-weight:600;font-size:11px;">${fmtMXN(t.emG)}</td>
+      <td style="color:var(--green);font-weight:700;">${tL}</td>
+      <td>${tN}</td><td>${tC}</td>
       <td>${cell(safeDiv(tG,tL))}</td><td>${cell(safeDiv(tG,tC))}</td>
       <td><div class="hist-actions">
-        <button class="btn-sm ghost" onclick="cargarMes(${idx})">✏️ Cargar</button>
+        <button class="btn-sm btn-ghost" onclick="cargarMes(${idx})">✏️</button>
         <button class="btn-sm btn-danger" onclick="eliminarMes(${idx})">🗑</button>
       </div></td></tr>`;
   });
@@ -693,35 +839,40 @@ async function eliminarMes(idx){
 }
 
 function cargarMes(idx){
-  const snap=historial[idx];
-  data.avMeta=JSON.parse(JSON.stringify(snap.avMetaCamps||[]));
-  data.emMeta=JSON.parse(JSON.stringify(snap.emMetaCamps||[]));
-  data.avGoogle=[{canal:"Google Ads",gasto:snap.avGoogleGasto||0,leads:snap.avGoogleLeads||0,neg:0,cierres:0}];
+  const s=historial[idx];
+  data.avMetaActivas=JSON.parse(JSON.stringify(s.avMetaActivas||[]));
+  data.avMetaPausadas=JSON.parse(JSON.stringify(s.avMetaPausadas||[]));
+  data.emMetaActivas=JSON.parse(JSON.stringify(s.emMetaActivas||[]));
+  data.emMetaPausadas=JSON.parse(JSON.stringify(s.emMetaPausadas||[]));
+  data.avGoogle=[{canal:"Google Ads",gasto:s.avGoogleGasto||0,leads:s.avGoogleLeads||0,neg:0,cierres:0}];
   editingIdx=idx;
-  document.getElementById("mes-nombre").value=snap.nombre;
+  document.getElementById("mes-nombre").value=s.nombre;
   document.getElementById("editing-badge").style.display="inline-block";
-  if(snap.desde)document.getElementById("fecha-inicio").value=snap.desde;
-  if(snap.hasta)document.getElementById("fecha-fin").value=snap.hasta;
-  if(snap.presMetaAv!=null)document.getElementById("pres-meta-av").value=snap.presMetaAv;
-  if(snap.presGoogleAv!=null)document.getElementById("pres-google-av").value=snap.presGoogleAv;
-  if(snap.presMetaEm!=null)document.getElementById("pres-meta-em").value=snap.presMetaEm;
-  if(snap.avGoogleGasto!=null)document.getElementById("gasto-google-av").value=snap.avGoogleGasto;
-  buildMetaTable("av",data.avMeta);buildMetaTable("em",data.emMeta);buildGoogleTable(data.avGoogle);
-  attachInputs();recalc();
-  showTab("tab-actual",document.querySelectorAll(".tab-btn")[0]);
+  if(s.desde)document.getElementById("fecha-inicio").value=s.desde;
+  if(s.hasta)document.getElementById("fecha-fin").value=s.hasta;
+  if(s.presMetaAv!=null)document.getElementById("pres-meta-av").value=s.presMetaAv;
+  if(s.presGoogleAv!=null)document.getElementById("pres-google-av").value=s.presGoogleAv;
+  if(s.presMetaEm!=null)document.getElementById("pres-meta-em").value=s.presMetaEm;
+  if(s.avGoogleGasto!=null)document.getElementById("gasto-google-av").value=s.avGoogleGasto;
+  buildActivas("#tblAvMetaActivas tbody",data.avMetaActivas,"avMetaActivas");
+  buildPausadas("#tblAvMetaPausadas tbody",data.avMetaPausadas,"avMetaPausadas");
+  buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
+  buildPausadas("#tblEmMetaPausadas tbody",data.emMetaPausadas,"emMetaPausadas");
+  buildGoogle(data.avGoogle);attachInputs();recalc();
+  showTab("tab-actual",document.querySelectorAll(".nav-tab")[0]);
   window.scrollTo({top:0,behavior:"smooth"});
 }
 
-// ── Gráfica ──
+// ══ GRÁFICA ══
 function renderGrafica(){
   const host=document.getElementById("chart-content");
-  if(historial.length<2){host.innerHTML='<div class="empty-state"><div class="big">📈</div>Guarda al menos 2 periodos para ver tendencias.</div>';return;}
-  host.innerHTML=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center;">
-    <label style="font-size:12px;font-weight:700;">Métrica:</label>
-    <select id="chart-metric" style="font-family:'Poppins',sans-serif;font-size:12px;padding:5px 9px;border-radius:7px;border:1.5px solid var(--line);">
+  if(historial.length<2){host.innerHTML='<div class="empty-state"><div class="big">📈</div>Guarda al menos 2 periodos.</div>';return;}
+  host.innerHTML=`<div class="chart-controls">
+    <label>Métrica:</label>
+    <select id="chart-metric">
       <option value="gasto">Gasto real total</option>
       <option value="leads">Leads totales</option>
-      <option value="cierres">Cierres totales</option>
+      <option value="cierres">Cierres</option>
       <option value="cpl">CPL promedio</option>
       <option value="cpa">CPA promedio</option>
     </select>
@@ -734,18 +885,18 @@ function drawChart(){
   const metric=document.getElementById("chart-metric")?.value||"gasto";
   const labels=historial.map(s=>s.nombre);
   const vals=historial.map(s=>{
-    const t=snapTotales(s);
-    const tG=t.avGasto+t.emGasto,tL=t.avLeads+t.emLeads,tC=t.avCierres+t.emCierres;
+    const t=snapT(s);const tG=t.avG+t.emG,tL=t.avL+t.emL,tC=t.avC+t.emC;
     if(metric==="gasto")return+tG.toFixed(2);if(metric==="leads")return tL;
-    if(metric==="cierres")return tC;if(metric==="cpl")return tL>0?+(tG/tL).toFixed(2):0;
+    if(metric==="cierres")return tC;
+    if(metric==="cpl")return tL>0?+(tG/tL).toFixed(2):0;
     if(metric==="cpa")return tC>0?+(tG/tC).toFixed(2):0;return 0;
   });
-  const cols={gasto:"#1E2761",leads:"#2C8A5B",cierres:"#A8336E",cpl:"#6B7280",cpa:"#6D2E46"};
-  const col=cols[metric]||"#1E2761";
+  const cols={gasto:"#1A56C4",leads:"#15803D",cierres:"#7C28C8",cpl:"#B45309",cpa:"#B91C1C"};
+  const col=cols[metric]||"#1A56C4";
   const cv=document.getElementById("myChart");if(!cv)return;
   const W=cv.offsetWidth||900,H=240;cv.width=W;cv.height=H;
   const ctx=cv.getContext("2d");ctx.clearRect(0,0,W,H);
-  const pad={t:24,r:16,b:44,l:74},cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
+  const pad={t:24,r:16,b:44,l:78},cw=W-pad.l-pad.r,ch=H-pad.t-pad.b;
   const max=Math.max(...vals)*1.18||1;
   ctx.strokeStyle="#E5E7EB";ctx.lineWidth=1;
   for(let i=0;i<=4;i++){
@@ -754,20 +905,19 @@ function drawChart(){
     const v=max*i/4;ctx.fillText(v>=1000?`$${Math.round(v/1000)}k`:Math.round(v),pad.l-5,y+4);
   }
   const pts=vals.map((v,i)=>({x:pad.l+(i/(vals.length-1||1))*cw,y:pad.t+ch*(1-v/max)}));
-  ctx.beginPath();ctx.moveTo(pts[0].x,pad.t+ch);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,pad.t+ch);ctx.closePath();ctx.fillStyle=col+"28";ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pad.t+ch);pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.lineTo(pts[pts.length-1].x,pad.t+ch);ctx.closePath();ctx.fillStyle=col+"18";ctx.fill();
   ctx.beginPath();ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.lineJoin="round";pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
   pts.forEach((p,i)=>{
     ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=2;ctx.stroke();
     ctx.fillStyle=col;ctx.font="bold 10.5px Poppins,sans-serif";ctx.textAlign="center";
     const v=vals[i];ctx.fillText(v>=1000?`$${Math.round(v/1000)}k`:["gasto","cpl","cpa"].includes(metric)?`$${Math.round(v)}`:v,p.x,p.y-10);
-    ctx.fillStyle="#374151";ctx.font="10.5px Poppins,sans-serif";ctx.fillText(labels[i],p.x,H-8);
+    ctx.fillStyle="#6B7280";ctx.font="10.5px Poppins,sans-serif";ctx.fillText(labels[i],p.x,H-8);
   });
 }
 
-// ── Utils ──
 function showTab(id,btn){
   document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".nav-tab").forEach(b=>b.classList.remove("active"));
   document.getElementById(id).classList.add("active");
   if(btn)btn.classList.add("active");
   if(id==="tab-grafica")setTimeout(renderGrafica,50);
@@ -781,17 +931,16 @@ function imprimirPanel(){
 }
 
 function resetData(){
-  data={avMeta:[],avGoogle:[],emMeta:[]};editingIdx=null;
+  data={avMetaActivas:[],avMetaPausadas:[],emMetaActivas:[],emMetaPausadas:[],avGoogle:[]};
+  editingIdx=null;
   document.getElementById("editing-badge").style.display="none";
   document.getElementById("mes-nombre").value="";
-  document.querySelector("#tblAvMeta tbody").innerHTML="";
-  document.querySelector("#tblAvGoogle tbody").innerHTML="";
-  document.querySelector("#tblEmMeta tbody").innerHTML="";
   document.getElementById("sync-status").style.display="none";
+  ["#tblAvMetaActivas tbody","#tblAvMetaPausadas tbody","#tblEmMetaActivas tbody","#tblEmMetaPausadas tbody","#tblAvGoogle tbody"]
+    .forEach(s=>{const el=document.querySelector(s);if(el)el.innerHTML="";});
   recalc();
 }
 
-// ── Init ──
 loadHistorial();
 sincronizar();
 </script>
