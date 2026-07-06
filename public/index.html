@@ -237,7 +237,7 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 
 <div class="periodo-bar">
   <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
-  <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-30"></label>
+  <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-26"></label>
   <button class="btn-primary" id="btn-sync" onclick="sincronizar()">🔄 Cargar periodo</button>
 </div>
 <div id="sync-status" style="display:none;"></div>
@@ -717,36 +717,59 @@ function recalc(){
   const gGA=parseFloat(document.getElementById("gasto-google-av")?.value)||0;
   const pME=parseFloat(document.getElementById("pres-meta-em")?.value)||0;
 
-  // Calcula sobre TODAS las activas (no filtradas) para los totales reales
+  // Filtra activas según producto seleccionado para totales y visuales
+  const avActivasFiltradas = filtroProducto==="all" ? data.avMetaActivas : data.avMetaActivas.filter(r=>(r.producto||getProducto(r.canal))===filtroProducto);
+
+  // CPL por fila (sobre todas para no romper IDs)
   data.avMetaActivas.forEach((r,i)=>{
     setCalc(`avMetaActivas-cpl-${i}`,safeDiv(r.gasto||0,r.leads||0));
     setCalc(`avMetaActivas-cpn-${i}`,safeDiv(r.gasto||0,r.neg||0));
     setCalc(`avMetaActivas-cpa-${i}`,safeDiv(r.gasto||0,r.cierres||0));
   });
-  const am=sumC(data.avMetaActivas);
+
+  // Totales tabla Meta = solo filtradas
+  const am=sumC(avActivasFiltradas);
   set("av-ma-g",fmtMXN(am.gasto));set("av-ma-l",am.leads);set("av-ma-n",am.neg);set("av-ma-c",am.cierres);
   set("av-ma-cpl",cell(safeDiv(am.gasto,am.leads)));set("av-ma-cpn",cell(safeDiv(am.gasto,am.neg)));set("av-ma-cpa",cell(safeDiv(am.gasto,am.cierres)));
-  drawDonut("donut-av","legend-av",data.avMetaActivas,am.gasto,PAL_AV);
-  buildDist("av-dist",data.avMetaActivas,am.gasto,PAL_AV);
+  drawDonut("donut-av","legend-av",avActivasFiltradas,am.gasto,PAL_AV);
+  buildDist("av-dist",avActivasFiltradas,am.gasto,PAL_AV);
 
+  // Google (solo aplica en "all" o productos con campaña Google)
   data.avGoogle.forEach((r,i)=>{
     setCalc(`avGoogle-cpl-${i}`,safeDiv(r.gasto||0,r.leads||0));
     setCalc(`avGoogle-cpn-${i}`,safeDiv(r.gasto||0,r.neg||0));
     setCalc(`avGoogle-cpa-${i}`,safeDiv(r.gasto||0,r.cierres||0));
   });
-  const ag=sumC(data.avGoogle);ag.gasto=gGA;
-  set("av-gg-g",fmtMXN(ag.gasto));set("av-gg-l",ag.leads);set("av-gg-n",ag.neg);set("av-gg-c",ag.cierres);
-  set("av-gg-cpl",cell(safeDiv(ag.gasto,ag.leads)));set("av-gg-cpn",cell(safeDiv(ag.gasto,ag.neg)));set("av-gg-cpa",cell(safeDiv(ag.gasto,ag.cierres)));
+  const ag=sumC(data.avGoogle); ag.gasto=gGA;
+  // Ocultar Google si hay filtro de producto (Google no tiene desglose por producto)
+  const showGoogle = filtroProducto==="all" || filtroProducto==="broadcaster" || filtroProducto==="general";
+  const agLeads = showGoogle ? ag.leads : 0;
+  const agGasto = showGoogle ? ag.gasto : 0;
+  set("av-gg-g",fmtMXN(agGasto));set("av-gg-l",agLeads);set("av-gg-n",ag.neg);set("av-gg-c",ag.cierres);
+  set("av-gg-cpl",cell(safeDiv(agGasto,agLeads)));set("av-gg-cpn",cell(safeDiv(agGasto,ag.neg)));set("av-gg-cpa",cell(safeDiv(agGasto,ag.cierres)));
 
-  const aTP=pMA+pGA,aTG=am.gasto+ag.gasto,aTL=am.leads+ag.leads,aTN=am.neg+ag.neg,aTC=am.cierres+ag.cierres;
+  // Cards y stats: totales del producto seleccionado
+  const aTP = filtroProducto==="all" ? pMA+pGA : pMA;
+  const aTG = am.gasto + agGasto;
+  const aTL = am.leads + agLeads;
+  const aTN = am.neg + ag.neg;
+  const aTC = am.cierres + ag.cierres;
+
+  // Label dinámico en cards según filtro
+  const prodLabel = {all:"Meta + Google",vendia:"Vendía",broadcaster:"BroadcasterBot",omia:"Omia",general:"Averix General"}[filtroProducto]||"";
+  const cardSub = document.querySelector("#av-card-pres")?.closest(".card")?.querySelector(".c-sub");
+  if(cardSub) cardSub.textContent = prodLabel;
+
   set("av-card-pres",fmtMXN(aTP));set("av-card-gasto",fmtMXN(aTG));set("av-card-leads",aTL);set("av-card-cierres",aTC);
   set("av-card-cpl","CPL "+cell(safeDiv(aTG,aTL)));
   const dA=aTG-aTP,sA=dA>=0?"+":"−";
   set("av-card-vs",sA+fmtMXN0(Math.abs(dA))+" vs presupuesto");
-  set("av-tasa",fmtPct(aTL>0?aTC/aTL*100:0));set("av-tasa-nc",fmtPct(aTN>0?aTC/aTN*100:0));
+  set("av-tasa",fmtPct(aTL>0?aTC/aTL*100:0));
+  set("av-tasa-nc",fmtPct(aTN>0?aTC/aTN*100:0));
   set("av-vspres",sA+fmtMXN0(Math.abs(dA)));
   set("av-vspres-sub",sA+fmtPct(Math.abs(aTP>0?dA/aTP*100:0))+(Math.abs(aTP>0?dA/aTP*100:0)<=10?" · on target":" · revisar"));
 
+  // e-Markeed (sin filtro por producto)
   data.emMetaActivas.forEach((r,i)=>{
     setCalc(`emMetaActivas-cpl-${i}`,safeDiv(r.gasto||0,r.leads||0));
     setCalc(`emMetaActivas-cpn-${i}`,safeDiv(r.gasto||0,r.neg||0));
@@ -760,13 +783,15 @@ function recalc(){
   set("em-card-cpl","CPL "+cell(safeDiv(em.gasto,em.leads)));
   const dE=em.gasto-pME,sE=dE>=0?"+":"−";
   set("em-card-vs",sE+fmtMXN0(Math.abs(dE))+" vs presupuesto");
-  set("em-tasa",fmtPct(em.leads>0?em.cierres/em.leads*100:0));set("em-tasa-nc",fmtPct(em.neg>0?em.cierres/em.neg*100:0));
+  set("em-tasa",fmtPct(em.leads>0?em.cierres/em.leads*100:0));
+  set("em-tasa-nc",fmtPct(em.neg>0?em.cierres/em.neg*100:0));
   set("em-vspres",sE+fmtMXN0(Math.abs(dE)));
   set("em-vspres-sub",sE+fmtPct(Math.abs(pME>0?dE/pME*100:0))+(Math.abs(pME>0?dE/pME*100:0)<=10?" · on target":" · revisar"));
 
+  // Consolidado: Averix filtrado + e-Markeed completo
   const cG=aTG+em.gasto,cL=aTL+em.leads,cC=aTC+em.cierres,cP=aTP+pME;
   set("co-pres",fmtMXN(cP));set("co-gasto",fmtMXN(cG));set("co-leads",cL);set("co-cierres",cC);
-  set("co-gasto-sub",`${fmtMXN(aTG)} Averix · ${fmtMXN(em.gasto)} e-Markeed`);
+  set("co-gasto-sub",`${fmtMXN(aTG)} Averix (${prodLabel}) · ${fmtMXN(em.gasto)} e-Markeed`);
   set("co-leads-sub",`${aTL} Averix · ${em.leads} e-Markeed`);
   set("co-cierres-sub",`${aTC} Averix · ${em.cierres} e-Markeed`);
 
@@ -1016,7 +1041,7 @@ function renderGrafica(){
       <option value="omia">Omia</option>
       <option value="emarkeed">e-Markeed</option>
     </select>
-  </div><canvas id="myChart" height="450"></canvas>`;
+  </div><canvas id="myChart" height="240"></canvas>`;
   document.getElementById("chart-metric").addEventListener("change",drawChart);
   document.getElementById("chart-prod").addEventListener("change",drawChart);
   drawChart();
