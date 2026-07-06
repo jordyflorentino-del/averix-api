@@ -47,6 +47,7 @@ const CAMP_MAP = {
   "averix_leadgen_omnicanal_may26":            { cuenta: "averix", canal: "Meta" },
   "broadcasterbot_junio_julio":                { cuenta: "averix", canal: "Meta" },
   "broadcasterbot junio julio":                { cuenta: "averix", canal: "Meta" },
+  "broadcasterbot__op_junio_julio":            { cuenta: "averix", canal: "Meta" },
   "omnicanalidad":                             { cuenta: "averix", canal: "Google" },
   "omia_search_leadgen_highintent_mx_v01":     { cuenta: "averix", canal: "Google" },
   "vendia_search_leadgen_highintent_mx_v01":   { cuenta: "averix", canal: "Google" },
@@ -149,10 +150,10 @@ async function getGoogleLeads(fi, ff, token) {
       filterGroups: [{
         filters: [
           { propertyName: "createdate", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
-          { propertyName: "hs_analytics_source", operator: "EQ", values: ["PAID_SEARCH"] },
+          { propertyName: "hs_analytics_source", operator: "EQ", value: "PAID_SEARCH" },
         ],
       }],
-      properties: ["hs_latest_source_data_2"],
+      properties: ["hs_latest_source_data_2", "hs_analytics_source"],
       limit: 200,
       ...(after ? { after } : {}),
     };
@@ -161,11 +162,7 @@ async function getGoogleLeads(fi, ff, token) {
     if (status !== 200) break;
 
     for (const c of data.results ?? []) {
-      const raw = c.properties?.hs_latest_source_data_2;
-      if (!raw) continue;
-      const camp = String(raw).toLowerCase().trim();
-      const map = CAMP_MAP[camp];
-      if (map?.canal === "Google" && map?.cuenta === "averix") averixGoogle++;
+      averixGoogle++;
     }
     after = data.paging?.next?.after;
   } while (after);
