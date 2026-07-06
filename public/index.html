@@ -237,7 +237,7 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 
 <div class="periodo-bar">
   <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
-  <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-30"></label>
+  <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-26"></label>
   <button class="btn-primary" id="btn-sync" onclick="sincronizar()">🔄 Cargar periodo</button>
 </div>
 <div id="sync-status" style="display:none;"></div>
@@ -511,6 +511,23 @@ const HISTORIAL_PRELOAD=[
       {canal:"Impulsa Tu negocio 26 - Copia",leads:4,gasto:800,status:"PAUSED",comentario:"Duplicado consolidado en campaña principal"},
     ],
     avGoogleLeads:4,avGoogleGasto:0,presMetaAv:17577,presGoogleAv:11000,presMetaEm:18895},
+  {nombre:"Junio 2026",desde:"2026-06-01",hasta:"2026-06-30",ts:1751385600000,
+    avMetaActivas:[
+      {canal:"Comercio en WhatsApp - Vendia Duplicado",leads:298,gasto:19393,neg:0,cierres:0,status:"ACTIVE",comentario:"",producto:"vendia"},
+      {canal:"Comercio en WhatsApp",leads:21,gasto:1841,neg:0,cierres:0,status:"PAUSED",comentario:"",producto:"vendia"},
+      {canal:"Averix Omnicanal - Mayo Junio",leads:5,gasto:1998,neg:0,cierres:0,status:"PAUSED",comentario:"",producto:"broadcaster"},
+      {canal:"Omia Decidores B2B",leads:12,gasto:2652,neg:0,cierres:0,status:"PAUSED",comentario:"",producto:"omia"},
+      {canal:"BroadcasterBot_Junio_julio",leads:1,gasto:359,neg:0,cierres:0,status:"ACTIVE",comentario:"",producto:"broadcaster"},
+    ],
+    avMetaPausadas:[],
+    emMetaActivas:[
+      {canal:"e-Markeed Impulsa Tu negocio 26",leads:19,gasto:3896,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"e-Markeed Branding",leads:13,gasto:3029,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"e-Markeed Impulsa Tu negocio 26 filtrado",leads:2,gasto:2740,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+      {canal:"Emarkeed-Servicios",leads:1,gasto:1724,neg:0,cierres:0,status:"ACTIVE",comentario:""},
+    ],
+    emMetaPausadas:[],
+    avGoogleLeads:3,avGoogleGasto:1766,presMetaAv:0,presGoogleAv:0,presMetaEm:0},
   {nombre:"Mayo 2026",desde:"2026-05-01",hasta:"2026-05-31",ts:1748736000000,
     avMetaActivas:[
       {canal:"Comercio en WhatsApp - Vendia Duplicado",leads:4,gasto:800,neg:0,cierres:0,status:"ACTIVE",comentario:"",producto:"vendia"},
@@ -858,7 +875,8 @@ async function sincronizar(){
     data.avMetaPausadas=Object.entries(avM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:"",producto:getProducto(n)}));
     data.emMetaActivas=Object.entries(emM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status,comentario:""}));
     data.emMetaPausadas=Object.entries(emM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:""}));
-    data.avGoogle=[{canal:"Google Ads",gasto:0,leads:d.totales?.averix?.Google||0,neg:0,cierres:0}];
+    const googleLeads = d.totales?.averix?.Google || 0;
+    data.avGoogle=[{canal:"Google Ads",gasto:parseFloat(document.getElementById("gasto-google-av")?.value)||0,leads:googleLeads,neg:0,cierres:0}];
     buildActivas("#tblAvMetaActivas tbody",data.avMetaActivas,"avMetaActivas");
     buildPausadas("#tblAvMetaPausadas tbody",data.avMetaPausadas,"avMetaPausadas");
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
