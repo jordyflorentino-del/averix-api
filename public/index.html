@@ -612,8 +612,8 @@ function buildActivas(sel,rows,key){
       ${prodCol}
       <td class="gasto-val">${fmtMXN(r.gasto||0)}</td>
       <td class="hs">${r.leads||0}</td>
-      <td><input type="number" min="0" step="1" value="${r.neg||0}" data-key="${key}" data-i="${realIdx}" data-f="neg"></td>
-      <td><input type="number" min="0" step="1" value="${r.cierres||0}" data-key="${key}" data-i="${realIdx}" data-f="cierres"></td>
+      <td class="hs">${r.neg||0}</td>
+      <td class="hs">${r.cierres||0}</td>
       <td class="calc" id="${key}-cpl-${realIdx}">—</td>
       <td class="calc" id="${key}-cpn-${realIdx}">—</td>
       <td class="calc" id="${key}-cpa-${realIdx}">—</td>`;
@@ -652,8 +652,8 @@ function buildGoogle(rows){
     tr.innerHTML=`<td class="label">${r.canal}<span class="badge-google">Google</span></td>
       <td><input type="number" min="0" step="0.01" value="${r.gasto||0}" data-key="avGoogle" data-i="${i}" data-f="gasto"></td>
       <td class="hs">${r.leads||0}</td>
-      <td><input type="number" min="0" step="1" value="${r.neg||0}" data-key="avGoogle" data-i="${i}" data-f="neg"></td>
-      <td><input type="number" min="0" step="1" value="${r.cierres||0}" data-key="avGoogle" data-i="${i}" data-f="cierres"></td>
+      <td class="hs">${r.neg||0}</td>
+      <td class="hs">${r.cierres||0}</td>
       <td class="calc" id="avGoogle-cpl-${i}">—</td>
       <td class="calc" id="avGoogle-cpn-${i}">—</td>
       <td class="calc" id="avGoogle-cpa-${i}">—</td>`;
@@ -896,12 +896,19 @@ async function sincronizar(){
     const d=await resp.json();
     if(d.error) throw new Error(d.error);
     const avM=d.averix?.Meta||{},emM=d.emk?.Meta||{};
-    data.avMetaActivas=Object.entries(avM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status,comentario:"",producto:getProducto(n)}));
+    const porCampana=d.negociosPorCampana||{};
+    const negCierresPara=(nombreCanal)=>{
+      const norm=String(nombreCanal||"").toLowerCase().trim();
+      return porCampana[norm]||{negocios:0,cierres:0};
+    };
+    data.avMetaActivas=Object.entries(avM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>{const nc=negCierresPara(n);return{canal:n,gasto:v.spend||0,leads:v.leads||0,neg:nc.negocios,cierres:nc.cierres,status:v.status,comentario:"",producto:getProducto(n)};});
     data.avMetaPausadas=Object.entries(avM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:"",producto:getProducto(n)}));
-    data.emMetaActivas=Object.entries(emM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,neg:0,cierres:0,status:v.status,comentario:""}));
+    data.emMetaActivas=Object.entries(emM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>{const nc=negCierresPara(n);return{canal:n,gasto:v.spend||0,leads:v.leads||0,neg:nc.negocios,cierres:nc.cierres,status:v.status,comentario:""};});
     data.emMetaPausadas=Object.entries(emM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:""}));
     const googleLeads = d.totales?.averix?.Google || 0;
-    data.avGoogle=[{canal:"Google Ads",gasto:parseFloat(document.getElementById("gasto-google-av")?.value)||0,leads:googleLeads,neg:0,cierres:0}];
+    const googleNeg = d.averix?.NegociosGoogle || 0;
+    const googleCierres = d.averix?.CierresGoogle || 0;
+    data.avGoogle=[{canal:"Google Ads",gasto:parseFloat(document.getElementById("gasto-google-av")?.value)||0,leads:googleLeads,neg:googleNeg,cierres:googleCierres}];
     buildActivas("#tblAvMetaActivas tbody",data.avMetaActivas,"avMetaActivas");
     buildPausadas("#tblAvMetaPausadas tbody",data.avMetaPausadas,"avMetaPausadas");
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
