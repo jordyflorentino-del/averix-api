@@ -315,11 +315,13 @@ async function getDealsBatch(dealIds, token, debug) {
   return mapa;
 }
 
-// ── NUEVO: Negocios y Cierres a partir de contactos + deals asociados ──
+// ── NUEVO: Negocios y Cierres a partir de contactos + deals asociados (total, por campaña y por canal Google) ──
 async function calcularNegociosYCierres(contactos, token, debug) {
   const resultado = {
     averix: { negocios: 0, cierres: 0 },
     emk: { negocios: 0, cierres: 0 },
+    averixGoogle: { negocios: 0, cierres: 0 },
+    porCampana: {}, // { "nombre campaña normalizado": { negocios, cierres } }
   };
 
   const contactIds = contactos.map(c => c.id);
@@ -350,6 +352,21 @@ async function calcularNegociosYCierres(contactos, token, debug) {
 
     const tieneAlgunCierre = dealIds.some(id => dealsInfo[id]?.isClosedWon);
     if (tieneAlgunCierre) resultado[cuenta].cierres++;
+
+    // Desglose específico Google Ads (Averix)
+    if (cuenta === "averix" && c.properties?.hs_analytics_source === "PAID_SEARCH") {
+      resultado.averixGoogle.negocios++;
+      if (tieneAlgunCierre) resultado.averixGoogle.cierres++;
+    }
+
+    // Desglose por campaña, usando el nombre normalizado que guarda HubSpot
+    const campNorm = String(c.properties?.hs_latest_source_data_2 || "").toLowerCase().trim();
+    if (!campNorm) continue;
+    if (!resultado.porCampana[campNorm]) {
+      resultado.porCampana[campNorm] = { negocios: 0, cierres: 0 };
+    }
+    resultado.porCampana[campNorm].negocios++;
+    if (tieneAlgunCierre) resultado.porCampana[campNorm].cierres++;
   }
 
   return resultado;
@@ -413,6 +430,9 @@ module.exports = async function handler(req, res) {
       resultado.averix.Cierres  = negociosCierres.averix.cierres;
       resultado.emk.Negocios    = negociosCierres.emk.negocios;
       resultado.emk.Cierres     = negociosCierres.emk.cierres;
+      resultado.averix.NegociosGoogle = negociosCierres.averixGoogle.negocios;
+      resultado.averix.CierresGoogle  = negociosCierres.averixGoogle.cierres;
+      resultado.negociosPorCampana = negociosCierres.porCampana; // { "nombre campaña (lowercase)": {negocios, cierres} }
       resultado.fuente.deals = "HubSpot Deals ✅";
     } else {
       resultado.fuente.hubspot = "HUBSPOT_TOKEN no configurado ⚠️";
