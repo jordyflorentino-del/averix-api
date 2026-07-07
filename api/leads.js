@@ -354,60 +354,106 @@ async function getContactsBatch(contactIds, token, debug) {
   return mapa;
 }
 
-// ── NUEVO: Negocios (deals creados en el periodo) y Cierres (deals cerrados-ganados en el periodo) ──
-async function calcularNegociosYCierres(fi, ff, token, debug) {
-  const resultado = {
-    averix: { negocios: 0, cierres: 0 },
-    emk: { negocios: 0, cierres: 0 },
-    averixGoogle: { negocios: 0, cierres: 0 },
-    porCampana: {}, // { "nombre campaña normalizado": { negocios, cierres } }
-  };
+// ── NUEVO: Negocios — validado 1:1 contra el reporte nativo de HubSpot
+// (Contacto con Estatus del Lead = "Negocio Creado", creado en el periodo, excluyendo Prospección en Frío) ──
+async function calcularNegocios(fi, ff, token, debug) {
+  const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
+  const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
+  const resultado = { averix: 0, emk: 0, averixGoogle: 0, porCampana: {} };
+  const contactos = [];
+  let after;
+  const statusCodes = [];
 
-  const dealsCreados = await getDealsPorFecha(fi, ff, token, "createdate", false, debug);
+  do {
+    const body = {
+      filterGroups: [{
+        filters: [
+          { propertyName: "estatus_del_lead", operator: "EQ", value: "Negocio Creado" },
+          { propertyName: "createdate", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
+          { propertyName: "fuente_mkt", operator: "NEQ", value: "PROSPECCIÓN EN FRÍO" },
+        ],
+      }],
+      properties: ["empresa_interna", "hs_latest_source_data_2", "hs_analytics_source", "fuente_mkt"],
+      limit: 200,
+      ...(after ? { after } : {}),
+    };
+    const { status, body: data } = await hsPost(body, token);
+    statusCodes.push(status);
+    if (status !== 200) break;
+
+    contactos.push(...(data.results ?? []));
+    after = data.paging?.next?.after;
+  } while (after);
+
+  if (debug) {
+    debug.negociosSearchStatus = statusCodes;
+    debug.totalNegociosContactos = contactos.length;
+  }
+
+  for (const c of contactos) {
+    const p = c.properties || {};
+    const cuenta = getCuentaFromEmpresaInterna(p.empresa_interna);
+    if (cuenta !== "averix" && cuenta !== "emk") continue;
+
+    resultado[cuenta]++;
+    if (cuenta === "averix" && p.hs_analytics_source === "PAID_SEARCH") resultado.averixGoogle++;
+
+    const campNorm = String(p.hs_latest_source_data_2 || "").toLowerCase().trim();
+    if (campNorm) {
+      if (!resultado.porCampana[campNorm]) resultado.porCampana[campNorm] = 0;
+      resultado.porCampana[campNorm]++;
+    }
+  }
+
+  return resultado;
+}
+
+// ── NUEVO: Cierres (deals cerrados-ganados en el periodo, vía hs_is_closed_won) ──
+async function calcularCierres(fi, ff, token, debug) {
+  const resultado = { averix: 0, emk: 0, averixGoogle: 0, porCampana: {} };
+
   const dealsCerrados = await getDealsPorFecha(fi, ff, token, "closedate", true, debug);
-  debug.totalDealsCreadosEnPeriodo = dealsCreados.length;
-  debug.totalDealsCerradosGanadosEnPeriodo = dealsCerrados.length;
+  if (debug) debug.totalDealsCerradosGanadosEnPeriodo = dealsCerrados.length;
+  if (!dealsCerrados.length) return resultado;
 
-  const todosLosDealIds = [...new Set([...dealsCreados.map(d => d.id), ...dealsCerrados.map(d => d.id)])];
-  if (!todosLosDealIds.length) return resultado;
-
-  const dealContactos = await getContactosDeDeals(todosLosDealIds, token, debug);
+  const dealContactos = await getContactosDeDeals(dealsCerrados.map(d => d.id), token, debug);
   const todosLosContactIds = Object.values(dealContactos).flat();
-  debug.totalContactosAsociadosADeals = todosLosContactIds.length;
+  if (debug) debug.totalContactosAsociadosADealsCerrados = todosLosContactIds.length;
 
   const contactosInfo = await getContactsBatch(todosLosContactIds, token, debug);
 
-  const primerContactoDe = (dealId) => {
-    const ids = dealContactos[dealId] || [];
-    return ids.length ? contactosInfo[ids[0]] : null;
-  };
+  for (const deal of dealsCerrados) {
+    const ids = dealContactos[deal.id] || [];
+    const contacto = ids.length ? contactosInfo[ids[0]] : null;
+    if (!contacto) continue;
 
-  const aplicar = (deals, tipo) => {
-    for (const deal of deals) {
-      const contacto = primerContactoDe(deal.id);
-      if (!contacto) continue;
+    const cuenta = getCuentaFromEmpresaInterna(contacto.empresa_interna);
+    if (cuenta !== "averix" && cuenta !== "emk") continue;
 
-      const cuenta = getCuentaFromEmpresaInterna(contacto.empresa_interna);
-      if (cuenta === "averix" || cuenta === "emk") {
-        resultado[cuenta][tipo]++;
+    resultado[cuenta]++;
+    if (cuenta === "averix" && contacto.hs_analytics_source === "PAID_SEARCH") resultado.averixGoogle++;
 
-        if (cuenta === "averix" && contacto.hs_analytics_source === "PAID_SEARCH") {
-          resultado.averixGoogle[tipo]++;
-        }
-
-        const campNorm = String(contacto.hs_latest_source_data_2 || "").toLowerCase().trim();
-        if (campNorm) {
-          if (!resultado.porCampana[campNorm]) resultado.porCampana[campNorm] = { negocios: 0, cierres: 0 };
-          resultado.porCampana[campNorm][tipo]++;
-        }
-      }
+    const campNorm = String(contacto.hs_latest_source_data_2 || "").toLowerCase().trim();
+    if (campNorm) {
+      if (!resultado.porCampana[campNorm]) resultado.porCampana[campNorm] = 0;
+      resultado.porCampana[campNorm]++;
     }
-  };
-
-  aplicar(dealsCreados, "negocios");
-  aplicar(dealsCerrados, "cierres");
+  }
 
   return resultado;
+}
+
+// ── Combina los resultados de Negocios y Cierres en un solo mapa por campaña ──
+function mergePorCampana(negociosPorCampana, cierresPorCampana) {
+  const merged = {};
+  for (const [camp, n] of Object.entries(negociosPorCampana || {})) {
+    merged[camp] = { negocios: n, cierres: 0 };
+  }
+  for (const [camp, c] of Object.entries(cierresPorCampana || {})) {
+    if (!merged[camp]) merged[camp] = { negocios: 0, cierres: 0 };
+    merged[camp].cierres = c;
+  }
+  return merged;
 }
 
 // ── Handler principal ──
@@ -462,15 +508,19 @@ module.exports = async function handler(req, res) {
       resultado.emk.MQLtoSQL = mqlSql.emk;
       resultado.fuente.mql_sql = "HubSpot lifecycle stages ✅";
 
-      // Negocios: deals creados en el periodo. Cierres: deals cerrados-ganados en el periodo. (Independiente de cuándo se creó el contacto)
-      const negociosCierres = await calcularNegociosYCierres(fi, ff, HS_TOKEN, debug);
-      resultado.averix.Negocios = negociosCierres.averix.negocios;
-      resultado.averix.Cierres  = negociosCierres.averix.cierres;
-      resultado.emk.Negocios    = negociosCierres.emk.negocios;
-      resultado.emk.Cierres     = negociosCierres.emk.cierres;
-      resultado.averix.NegociosGoogle = negociosCierres.averixGoogle.negocios;
-      resultado.averix.CierresGoogle  = negociosCierres.averixGoogle.cierres;
-      resultado.negociosPorCampana = negociosCierres.porCampana; // { "nombre campaña (lowercase)": {negocios, cierres} }
+      // Negocios: contactos con Estatus del Lead = "Negocio Creado" (validado 1:1 contra HubSpot)
+      const negocios = await calcularNegocios(fi, ff, HS_TOKEN, debug);
+      resultado.averix.Negocios = negocios.averix;
+      resultado.emk.Negocios    = negocios.emk;
+      resultado.averix.NegociosGoogle = negocios.averixGoogle;
+
+      // Cierres: deals cerrados-ganados en el periodo (hs_is_closed_won)
+      const cierres = await calcularCierres(fi, ff, HS_TOKEN, debug);
+      resultado.averix.Cierres = cierres.averix;
+      resultado.emk.Cierres    = cierres.emk;
+      resultado.averix.CierresGoogle = cierres.averixGoogle;
+
+      resultado.negociosPorCampana = mergePorCampana(negocios.porCampana, cierres.porCampana);
       resultado.fuente.deals = "HubSpot Deals ✅";
     } else {
       resultado.fuente.hubspot = "HUBSPOT_TOKEN no configurado ⚠️";
