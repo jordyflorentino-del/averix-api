@@ -184,7 +184,7 @@ async function getGoogleLeads(fi, ff, token) {
   return averixGoogle;
 }
 
-// ── NUEVO: Contactos del periodo con datos de lifecycle + fuente ──
+// ── NUEVO: Contactos del periodo (creados en el rango) — usado solo para muestreo/diagnóstico ──
 async function getContactsDelPeriodo(fi, ff, token) {
   const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
   const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
@@ -221,22 +221,39 @@ async function getContactsDelPeriodo(fi, ff, token) {
   return contactos;
 }
 
-// ── NUEVO: MQL → SQL a partir de los contactos ya obtenidos ──
-function calcularMqlToSql(contactos, fi, ff) {
+// ── NUEVO: MQL → SQL — busca directamente por fecha de ENTRADA a SQL, sin importar cuándo se creó el contacto ──
+async function calcularMqlToSql(fi, ff, token, debug) {
   const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
   const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
   const resultado = { averix: 0, emk: 0 };
+  const contactos = [];
+  let after;
+  const statusCodes = [];
+
+  do {
+    const body = {
+      filterGroups: [{
+        filters: [
+          { propertyName: "hs_v2_date_entered_salesqualifiedlead", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
+        ],
+      }],
+      properties: ["empresa_interna", "hs_v2_date_entered_marketingqualifiedlead", "hs_v2_date_entered_salesqualifiedlead"],
+      limit: 200,
+      ...(after ? { after } : {}),
+    };
+    const { status, body: data } = await hsPost(body, token);
+    statusCodes.push(status);
+    if (status !== 200) break;
+
+    contactos.push(...(data.results ?? []));
+    after = data.paging?.next?.after;
+  } while (after);
+
+  if (debug) debug.mqlSqlSearchStatus = statusCodes;
+  if (debug) debug.totalContactosEntraronASQLEnPeriodo = contactos.length;
 
   for (const c of contactos) {
     const p = c.properties || {};
-    const mqlDate = p.hs_v2_date_entered_marketingqualifiedlead;
-    const sqlDate = p.hs_v2_date_entered_salesqualifiedlead;
-    if (!mqlDate || !sqlDate) continue;
-
-    const sqlTs = new Date(sqlDate).getTime();
-    // Solo contamos la conversión si el paso a SQL ocurrió dentro del periodo consultado
-    if (sqlTs < tsFi || sqlTs > tsFf) continue;
-
     const cuenta = getCuentaFromEmpresaInterna(p.empresa_interna);
     if (cuenta === "averix") resultado.averix++;
     else if (cuenta === "emk") resultado.emk++;
@@ -245,78 +262,100 @@ function calcularMqlToSql(contactos, fi, ff) {
   return resultado;
 }
 
-// ── NUEVO: asociaciones contacto → deals (API v4 batch) ──
-async function getAsociacionesDeals(contactIds, token, debug) {
-  const mapa = {}; // contactId -> [dealId, dealId, ...]
-  const chunkSize = 100;
-  debug.assocStatusCodes = [];
-  debug.assocErrors = [];
+// ── NUEVO: Deals creados o cerrados dentro del periodo ──
+async function getDealsPorFecha(fi, ff, token, campoFecha, soloCerradosGanados, debug) {
+  const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
+  const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
+  const deals = [];
+  let after;
+  const statusCodes = [];
 
-  for (let i = 0; i < contactIds.length; i += chunkSize) {
-    const chunk = contactIds.slice(i, i + chunkSize);
+  do {
+    const filtros = [
+      { propertyName: campoFecha, operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
+    ];
+    if (soloCerradosGanados) {
+      filtros.push({ propertyName: "hs_is_closed_won", operator: "EQ", value: "true" });
+    }
+    const body = {
+      filterGroups: [{ filters: filtros }],
+      properties: ["dealstage", "hs_is_closed_won", "createdate", "closedate"],
+      limit: 200,
+      ...(after ? { after } : {}),
+    };
+    const { status, body: data } = await hsRequest("/crm/v3/objects/deals/search", "POST", body, token);
+    statusCodes.push(status);
+    if (status !== 200) break;
+
+    deals.push(...(data.results ?? []));
+    after = data.paging?.next?.after;
+  } while (after);
+
+  if (debug) {
+    debug[`dealsSearchStatus_${campoFecha}${soloCerradosGanados ? "_ganados" : ""}`] = statusCodes;
+  }
+
+  return deals;
+}
+
+// ── NUEVO: asociaciones deal → contactos (API v4 batch, dirección inversa) ──
+async function getContactosDeDeals(dealIds, token, debug) {
+  const mapa = {}; // dealId -> [contactId, ...]
+  const chunkSize = 100;
+  const idsUnicos = [...new Set(dealIds)];
+  const statusCodes = [];
+
+  for (let i = 0; i < idsUnicos.length; i += chunkSize) {
+    const chunk = idsUnicos.slice(i, i + chunkSize);
     const body = { inputs: chunk.map(id => ({ id: String(id) })) };
     const { status, body: data } = await hsRequest(
-      "/crm/v4/associations/contacts/deals/batch/read",
+      "/crm/v4/associations/deals/contacts/batch/read",
       "POST",
       body,
       token
     );
-    debug.assocStatusCodes.push(status);
-    if (status !== 200) {
-      debug.assocErrors.push(data);
-      continue;
-    }
+    statusCodes.push(status);
+    if (status !== 200) continue;
 
     for (const r of data.results ?? []) {
       const fromId = r.from?.id;
-      const dealIds = (r.to ?? []).map(t => t.toObjectId || t.id).filter(Boolean);
-      if (fromId) mapa[fromId] = dealIds;
+      const contactIds = (r.to ?? []).map(t => t.toObjectId || t.id).filter(Boolean);
+      if (fromId) mapa[fromId] = contactIds;
     }
   }
 
+  if (debug) debug.dealsContactosAssocStatus = statusCodes;
   return mapa;
 }
 
-// ── NUEVO: leer deals en batch (dealstage, hs_is_closed_won) ──
-async function getDealsBatch(dealIds, token, debug) {
-  const mapa = {}; // dealId -> { isClosedWon }
+// ── NUEVO: leer contactos en batch (empresa_interna, fuente, canal) ──
+async function getContactsBatch(contactIds, token, debug) {
+  const mapa = {}; // contactId -> properties
   const chunkSize = 100;
-  const idsUnicos = [...new Set(dealIds)];
-  debug.dealsStatusCodes = [];
-  debug.dealsErrors = [];
-  debug.totalDealIdsUnicos = idsUnicos.length;
+  const idsUnicos = [...new Set(contactIds)];
+  const statusCodes = [];
 
   for (let i = 0; i < idsUnicos.length; i += chunkSize) {
     const chunk = idsUnicos.slice(i, i + chunkSize);
     const body = {
       inputs: chunk.map(id => ({ id: String(id) })),
-      properties: ["dealstage", "hs_is_closed_won", "closedate"],
+      properties: ["empresa_interna", "hs_latest_source_data_2", "hs_analytics_source"],
     };
-    const { status, body: data } = await hsRequest(
-      "/crm/v3/objects/deals/batch/read",
-      "POST",
-      body,
-      token
-    );
-    debug.dealsStatusCodes.push(status);
-    if (status !== 200) {
-      debug.dealsErrors.push(data);
-      continue;
-    }
+    const { status, body: data } = await hsRequest("/crm/v3/objects/contacts/batch/read", "POST", body, token);
+    statusCodes.push(status);
+    if (status !== 200) continue;
 
-    for (const d of data.results ?? []) {
-      mapa[d.id] = {
-        isClosedWon: d.properties?.hs_is_closed_won === "true",
-        dealstage: d.properties?.dealstage,
-      };
+    for (const c of data.results ?? []) {
+      mapa[c.id] = c.properties || {};
     }
   }
 
+  if (debug) debug.contactsBatchStatus = statusCodes;
   return mapa;
 }
 
-// ── NUEVO: Negocios y Cierres a partir de contactos + deals asociados (total, por campaña y por canal Google) ──
-async function calcularNegociosYCierres(contactos, token, debug) {
+// ── NUEVO: Negocios (deals creados en el periodo) y Cierres (deals cerrados-ganados en el periodo) ──
+async function calcularNegociosYCierres(fi, ff, token, debug) {
   const resultado = {
     averix: { negocios: 0, cierres: 0 },
     emk: { negocios: 0, cierres: 0 },
@@ -324,50 +363,49 @@ async function calcularNegociosYCierres(contactos, token, debug) {
     porCampana: {}, // { "nombre campaña normalizado": { negocios, cierres } }
   };
 
-  const contactIds = contactos.map(c => c.id);
-  debug.totalContactosParaAsociaciones = contactIds.length;
-  if (!contactIds.length) return resultado;
+  const dealsCreados = await getDealsPorFecha(fi, ff, token, "createdate", false, debug);
+  const dealsCerrados = await getDealsPorFecha(fi, ff, token, "closedate", true, debug);
+  debug.totalDealsCreadosEnPeriodo = dealsCreados.length;
+  debug.totalDealsCerradosGanadosEnPeriodo = dealsCerrados.length;
 
-  const asociaciones = await getAsociacionesDeals(contactIds, token, debug);
-  debug.totalContactosConDealAsociado = Object.keys(asociaciones).filter(k => asociaciones[k].length > 0).length;
-
-  const todosLosDealIds = Object.values(asociaciones).flat();
-  debug.totalDealIdsEncontrados = todosLosDealIds.length;
-
-  // Validación cruzada: cuántos contactos ya están marcados como "Negocio Creado" en estatus_del_lead
-  debug.contactosConEstatusNegocioCreado = contactos.filter(c => c.properties?.estatus_del_lead === "Negocio Creado").length;
-
+  const todosLosDealIds = [...new Set([...dealsCreados.map(d => d.id), ...dealsCerrados.map(d => d.id)])];
   if (!todosLosDealIds.length) return resultado;
 
-  const dealsInfo = await getDealsBatch(todosLosDealIds, token, debug);
+  const dealContactos = await getContactosDeDeals(todosLosDealIds, token, debug);
+  const todosLosContactIds = Object.values(dealContactos).flat();
+  debug.totalContactosAsociadosADeals = todosLosContactIds.length;
 
-  for (const c of contactos) {
-    const cuenta = getCuentaFromEmpresaInterna(c.properties?.empresa_interna);
-    if (cuenta !== "averix" && cuenta !== "emk") continue;
+  const contactosInfo = await getContactsBatch(todosLosContactIds, token, debug);
 
-    const dealIds = asociaciones[c.id] || [];
-    if (!dealIds.length) continue;
+  const primerContactoDe = (dealId) => {
+    const ids = dealContactos[dealId] || [];
+    return ids.length ? contactosInfo[ids[0]] : null;
+  };
 
-    resultado[cuenta].negocios++;
+  const aplicar = (deals, tipo) => {
+    for (const deal of deals) {
+      const contacto = primerContactoDe(deal.id);
+      if (!contacto) continue;
 
-    const tieneAlgunCierre = dealIds.some(id => dealsInfo[id]?.isClosedWon);
-    if (tieneAlgunCierre) resultado[cuenta].cierres++;
+      const cuenta = getCuentaFromEmpresaInterna(contacto.empresa_interna);
+      if (cuenta === "averix" || cuenta === "emk") {
+        resultado[cuenta][tipo]++;
 
-    // Desglose específico Google Ads (Averix)
-    if (cuenta === "averix" && c.properties?.hs_analytics_source === "PAID_SEARCH") {
-      resultado.averixGoogle.negocios++;
-      if (tieneAlgunCierre) resultado.averixGoogle.cierres++;
+        if (cuenta === "averix" && contacto.hs_analytics_source === "PAID_SEARCH") {
+          resultado.averixGoogle[tipo]++;
+        }
+
+        const campNorm = String(contacto.hs_latest_source_data_2 || "").toLowerCase().trim();
+        if (campNorm) {
+          if (!resultado.porCampana[campNorm]) resultado.porCampana[campNorm] = { negocios: 0, cierres: 0 };
+          resultado.porCampana[campNorm][tipo]++;
+        }
+      }
     }
+  };
 
-    // Desglose por campaña, usando el nombre normalizado que guarda HubSpot
-    const campNorm = String(c.properties?.hs_latest_source_data_2 || "").toLowerCase().trim();
-    if (!campNorm) continue;
-    if (!resultado.porCampana[campNorm]) {
-      resultado.porCampana[campNorm] = { negocios: 0, cierres: 0 };
-    }
-    resultado.porCampana[campNorm].negocios++;
-    if (tieneAlgunCierre) resultado.porCampana[campNorm].cierres++;
-  }
+  aplicar(dealsCreados, "negocios");
+  aplicar(dealsCerrados, "cierres");
 
   return resultado;
 }
@@ -412,20 +450,20 @@ module.exports = async function handler(req, res) {
       resultado.averix.Google = await getGoogleLeads(fi, ff, HS_TOKEN);
       resultado.fuente.google = "HubSpot CRM ✅";
 
-      // Un solo fetch de contactos del periodo, reutilizado para MQL→SQL, Negocios y Cierres
+      // Muestra de diagnóstico (contactos creados en el periodo, no usado para Negocios/Cierres/MQL-SQL)
       const contactosPeriodo = await getContactsDelPeriodo(fi, ff, HS_TOKEN);
       debug.totalContactosPeriodo = contactosPeriodo.length;
-      debug.contactosConMqlDate = contactosPeriodo.filter(c => c.properties?.hs_v2_date_entered_marketingqualifiedlead).length;
-      debug.contactosConSqlDate = contactosPeriodo.filter(c => c.properties?.hs_v2_date_entered_salesqualifiedlead).length;
       debug.contactosConEmpresaInterna = contactosPeriodo.filter(c => c.properties?.empresa_interna).length;
       debug.ejemploContacto = contactosPeriodo[0]?.properties || null;
 
-      const mqlSql = calcularMqlToSql(contactosPeriodo, fi, ff);
+      // MQL→SQL: busca por fecha real de conversión, sin importar cuándo se creó el contacto
+      const mqlSql = await calcularMqlToSql(fi, ff, HS_TOKEN, debug);
       resultado.averix.MQLtoSQL = mqlSql.averix;
       resultado.emk.MQLtoSQL = mqlSql.emk;
       resultado.fuente.mql_sql = "HubSpot lifecycle stages ✅";
 
-      const negociosCierres = await calcularNegociosYCierres(contactosPeriodo, HS_TOKEN, debug);
+      // Negocios: deals creados en el periodo. Cierres: deals cerrados-ganados en el periodo. (Independiente de cuándo se creó el contacto)
+      const negociosCierres = await calcularNegociosYCierres(fi, ff, HS_TOKEN, debug);
       resultado.averix.Negocios = negociosCierres.averix.negocios;
       resultado.averix.Cierres  = negociosCierres.averix.cierres;
       resultado.emk.Negocios    = negociosCierres.emk.negocios;
