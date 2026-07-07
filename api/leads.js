@@ -82,9 +82,17 @@ function getCuentaFromCampaign(rawName) {
   if (!rawName) return null;
   const norm = String(rawName).toLowerCase().trim();
   if (CAMP_MAP[norm]) return CAMP_MAP[norm].cuenta;
-  // fallback: coincidencia parcial
   const found = Object.entries(CAMP_MAP).find(([k]) => norm.includes(k) || k.includes(norm));
   return found ? found[1].cuenta : null;
+}
+
+// Atribución directa y confiable vía el campo "Empresa Interna" (empresa_interna)
+function getCuentaFromEmpresaInterna(valor) {
+  if (!valor) return null;
+  const norm = String(valor).toLowerCase().trim();
+  if (norm === "averix") return "averix";
+  if (norm === "e-markeed" || norm === "emk" || norm === "emarkeed") return "emk";
+  return null;
 }
 
 // Mapeo nombre campaña Meta → cuenta (para atribución de leads de Meta Ads)
@@ -193,9 +201,11 @@ async function getContactsDelPeriodo(fi, ff, token) {
       properties: [
         "hs_latest_source_data_2",
         "hs_analytics_source",
+        "empresa_interna",
+        "estatus_del_lead",
         "lifecyclestage",
-        "hs_lifecyclestage_marketingqualifiedlead_date",
-        "hs_lifecyclestage_salesqualifiedlead_date",
+        "hs_v2_date_entered_marketingqualifiedlead",
+        "hs_v2_date_entered_salesqualifiedlead",
       ],
       limit: 200,
       ...(after ? { after } : {}),
@@ -219,15 +229,15 @@ function calcularMqlToSql(contactos, fi, ff) {
 
   for (const c of contactos) {
     const p = c.properties || {};
-    const mqlDate = p.hs_lifecyclestage_marketingqualifiedlead_date;
-    const sqlDate = p.hs_lifecyclestage_salesqualifiedlead_date;
+    const mqlDate = p.hs_v2_date_entered_marketingqualifiedlead;
+    const sqlDate = p.hs_v2_date_entered_salesqualifiedlead;
     if (!mqlDate || !sqlDate) continue;
 
     const sqlTs = new Date(sqlDate).getTime();
     // Solo contamos la conversión si el paso a SQL ocurrió dentro del periodo consultado
     if (sqlTs < tsFi || sqlTs > tsFf) continue;
 
-    const cuenta = getCuentaFromCampaign(p.hs_latest_source_data_2);
+    const cuenta = getCuentaFromEmpresaInterna(p.empresa_interna);
     if (cuenta === "averix") resultado.averix++;
     else if (cuenta === "emk") resultado.emk++;
   }
@@ -236,9 +246,11 @@ function calcularMqlToSql(contactos, fi, ff) {
 }
 
 // ── NUEVO: asociaciones contacto → deals (API v4 batch) ──
-async function getAsociacionesDeals(contactIds, token) {
+async function getAsociacionesDeals(contactIds, token, debug) {
   const mapa = {}; // contactId -> [dealId, dealId, ...]
   const chunkSize = 100;
+  debug.assocStatusCodes = [];
+  debug.assocErrors = [];
 
   for (let i = 0; i < contactIds.length; i += chunkSize) {
     const chunk = contactIds.slice(i, i + chunkSize);
@@ -249,7 +261,11 @@ async function getAsociacionesDeals(contactIds, token) {
       body,
       token
     );
-    if (status !== 200) continue;
+    debug.assocStatusCodes.push(status);
+    if (status !== 200) {
+      debug.assocErrors.push(data);
+      continue;
+    }
 
     for (const r of data.results ?? []) {
       const fromId = r.from?.id;
@@ -262,10 +278,13 @@ async function getAsociacionesDeals(contactIds, token) {
 }
 
 // ── NUEVO: leer deals en batch (dealstage, hs_is_closed_won) ──
-async function getDealsBatch(dealIds, token) {
+async function getDealsBatch(dealIds, token, debug) {
   const mapa = {}; // dealId -> { isClosedWon }
   const chunkSize = 100;
   const idsUnicos = [...new Set(dealIds)];
+  debug.dealsStatusCodes = [];
+  debug.dealsErrors = [];
+  debug.totalDealIdsUnicos = idsUnicos.length;
 
   for (let i = 0; i < idsUnicos.length; i += chunkSize) {
     const chunk = idsUnicos.slice(i, i + chunkSize);
@@ -279,7 +298,11 @@ async function getDealsBatch(dealIds, token) {
       body,
       token
     );
-    if (status !== 200) continue;
+    debug.dealsStatusCodes.push(status);
+    if (status !== 200) {
+      debug.dealsErrors.push(data);
+      continue;
+    }
 
     for (const d of data.results ?? []) {
       mapa[d.id] = {
@@ -293,23 +316,31 @@ async function getDealsBatch(dealIds, token) {
 }
 
 // ── NUEVO: Negocios y Cierres a partir de contactos + deals asociados ──
-async function calcularNegociosYCierres(contactos, token) {
+async function calcularNegociosYCierres(contactos, token, debug) {
   const resultado = {
     averix: { negocios: 0, cierres: 0 },
     emk: { negocios: 0, cierres: 0 },
   };
 
   const contactIds = contactos.map(c => c.id);
+  debug.totalContactosParaAsociaciones = contactIds.length;
   if (!contactIds.length) return resultado;
 
-  const asociaciones = await getAsociacionesDeals(contactIds, token);
+  const asociaciones = await getAsociacionesDeals(contactIds, token, debug);
+  debug.totalContactosConDealAsociado = Object.keys(asociaciones).filter(k => asociaciones[k].length > 0).length;
+
   const todosLosDealIds = Object.values(asociaciones).flat();
+  debug.totalDealIdsEncontrados = todosLosDealIds.length;
+
+  // Validación cruzada: cuántos contactos ya están marcados como "Negocio Creado" en estatus_del_lead
+  debug.contactosConEstatusNegocioCreado = contactos.filter(c => c.properties?.estatus_del_lead === "Negocio Creado").length;
+
   if (!todosLosDealIds.length) return resultado;
 
-  const dealsInfo = await getDealsBatch(todosLosDealIds, token);
+  const dealsInfo = await getDealsBatch(todosLosDealIds, token, debug);
 
   for (const c of contactos) {
-    const cuenta = getCuentaFromCampaign(c.properties?.hs_latest_source_data_2);
+    const cuenta = getCuentaFromEmpresaInterna(c.properties?.empresa_interna);
     if (cuenta !== "averix" && cuenta !== "emk") continue;
 
     const dealIds = asociaciones[c.id] || [];
@@ -358,19 +389,26 @@ module.exports = async function handler(req, res) {
       resultado.fuente.meta = "META_TOKEN no configurado ⚠️";
     }
 
+    const debug = {};
+
     if (HS_TOKEN) {
       resultado.averix.Google = await getGoogleLeads(fi, ff, HS_TOKEN);
       resultado.fuente.google = "HubSpot CRM ✅";
 
       // Un solo fetch de contactos del periodo, reutilizado para MQL→SQL, Negocios y Cierres
       const contactosPeriodo = await getContactsDelPeriodo(fi, ff, HS_TOKEN);
+      debug.totalContactosPeriodo = contactosPeriodo.length;
+      debug.contactosConMqlDate = contactosPeriodo.filter(c => c.properties?.hs_v2_date_entered_marketingqualifiedlead).length;
+      debug.contactosConSqlDate = contactosPeriodo.filter(c => c.properties?.hs_v2_date_entered_salesqualifiedlead).length;
+      debug.contactosConEmpresaInterna = contactosPeriodo.filter(c => c.properties?.empresa_interna).length;
+      debug.ejemploContacto = contactosPeriodo[0]?.properties || null;
 
       const mqlSql = calcularMqlToSql(contactosPeriodo, fi, ff);
       resultado.averix.MQLtoSQL = mqlSql.averix;
       resultado.emk.MQLtoSQL = mqlSql.emk;
       resultado.fuente.mql_sql = "HubSpot lifecycle stages ✅";
 
-      const negociosCierres = await calcularNegociosYCierres(contactosPeriodo, HS_TOKEN);
+      const negociosCierres = await calcularNegociosYCierres(contactosPeriodo, HS_TOKEN, debug);
       resultado.averix.Negocios = negociosCierres.averix.negocios;
       resultado.averix.Cierres  = negociosCierres.averix.cierres;
       resultado.emk.Negocios    = negociosCierres.emk.negocios;
@@ -379,6 +417,8 @@ module.exports = async function handler(req, res) {
     } else {
       resultado.fuente.hubspot = "HUBSPOT_TOKEN no configurado ⚠️";
     }
+
+    resultado.debug = debug;
 
     // Totales (corregido: sumar .leads de cada campaña, no el objeto completo)
     const totalAvMeta = Object.values(resultado.averix.Meta).reduce((a, b) => a + (b.leads || 0), 0);
