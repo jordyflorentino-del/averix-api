@@ -252,6 +252,18 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
     <span id="editing-badge" class="badge-editing" style="display:none;">Editando periodo</span>
   </div>
 
+  <div class="consolidado" style="margin-bottom:20px;">
+    <div class="consolidado-title">Resumen general del periodo
+      <span class="badge-meta">Averix</span><span class="badge-emarkeed">e-Markeed</span>
+    </div>
+    <div class="cards">
+      <div class="card c-av"><div class="c-label">Presupuesto gastado (combinado)</div><div class="c-value" id="sum-gasto">—</div><div class="c-sub" id="sum-gasto-sub">—</div></div>
+      <div class="card c-green"><div class="c-label">Leads totales</div><div class="c-value" id="sum-leads">—</div><div class="c-sub" id="sum-leads-sub">—</div></div>
+      <div class="card c-gold"><div class="c-label">Negocios creados totales</div><div class="c-value" id="sum-negocios">—</div><div class="c-sub" id="sum-negocios-sub">—</div></div>
+      <div class="card c-av"><div class="c-label">Cierres totales</div><div class="c-value" id="sum-cierres">—</div><div class="c-sub" id="sum-cierres-sub">—</div></div>
+    </div>
+  </div>
+
   <div class="src-legend">
     <span><span class="dot" style="background:var(--green)"></span>Leads y gasto: Meta Ads API</span>
     <span><span class="dot" style="background:var(--google)"></span>Google leads: HubSpot CRM</span>
@@ -388,6 +400,7 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
       <div class="card c-gold"><div class="c-label">Presupuesto combinado</div><div class="c-value" id="co-pres">—</div><div class="c-sub">Total asignado</div></div>
       <div class="card c-av"><div class="c-label">Gasto real total</div><div class="c-value" id="co-gasto">—</div><div class="c-sub" id="co-gasto-sub">—</div></div>
       <div class="card c-green"><div class="c-label">Leads totales</div><div class="c-value" id="co-leads">—</div><div class="c-sub" id="co-leads-sub">—</div></div>
+      <div class="card c-gold"><div class="c-label">Negocios totales</div><div class="c-value" id="co-negocios">—</div><div class="c-sub" id="co-negocios-sub">—</div></div>
       <div class="card c-av"><div class="c-label">Cierres totales</div><div class="c-value" id="co-cierres">—</div><div class="c-sub" id="co-cierres-sub">—</div></div>
     </div>
   </div>
@@ -805,11 +818,19 @@ function recalc(){
   set("em-vspres-sub",sE+fmtPct(Math.abs(pME>0?dE/pME*100:0))+(Math.abs(pME>0?dE/pME*100:0)<=10?" · on target":" · revisar"));
 
   // Consolidado: Averix filtrado + e-Markeed completo
-  const cG=aTG+em.gasto,cL=aTL+em.leads,cC=aTC+em.cierres,cP=aTP+pME;
-  set("co-pres",fmtMXN(cP));set("co-gasto",fmtMXN(cG));set("co-leads",cL);set("co-cierres",cC);
+  const cG=aTG+em.gasto,cL=aTL+em.leads,cC=aTC+em.cierres,cP=aTP+pME,cN=aTN+em.neg;
+  set("co-pres",fmtMXN(cP));set("co-gasto",fmtMXN(cG));set("co-leads",cL);set("co-cierres",cC);set("co-negocios",cN);
   set("co-gasto-sub",`${fmtMXN(aTG)} Averix (${prodLabel}) · ${fmtMXN(em.gasto)} e-Markeed`);
   set("co-leads-sub",`${aTL} Averix · ${em.leads} e-Markeed`);
+  set("co-negocios-sub",`${aTN} Averix · ${em.neg} e-Markeed`);
   set("co-cierres-sub",`${aTC} Averix · ${em.cierres} e-Markeed`);
+
+  // Panel de resumen general (arriba de la página)
+  set("sum-gasto",fmtMXN(cG));set("sum-leads",cL);set("sum-negocios",cN);set("sum-cierres",cC);
+  set("sum-gasto-sub",`${fmtMXN(aTG)} Averix · ${fmtMXN(em.gasto)} e-Markeed`);
+  set("sum-leads-sub",`${aTL} Averix · ${em.leads} e-Markeed`);
+  set("sum-negocios-sub",`${aTN} Averix · ${em.neg} e-Markeed`);
+  set("sum-cierres-sub",`${aTC} Averix · ${em.cierres} e-Markeed`);
 
   ["av-meta","em-meta"].forEach(id=>{
     const count=id==="av-meta"?data.avMetaPausadas.length:data.emMetaPausadas.length;
