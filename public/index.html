@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css">
 <title>Panel · Averix + e-Markeed</title>
 <style>
 :root{
@@ -37,7 +38,7 @@ body{font-family:'Poppins',sans-serif;background:var(--body);color:var(--ink);li
 .sidebar-toggle{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.55);cursor:pointer;padding:5px;border-radius:6px;display:flex;flex-shrink:0;}
 .sidebar-toggle:hover{background:rgba(255,255,255,.08);color:#fff;}
 .sidebar.collapsed .sidebar-toggle{margin-left:0;}
-.sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
+.sidebar.collapsed .sidebar-toggle i{display:inline-block;transform:rotate(180deg);}
 
 .nav-tabs{display:flex;flex-direction:column;gap:2px;padding:10px 8px;flex:1;}
 .nav-tab{font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,.72);transition:all .15s;display:flex;align-items:center;gap:10px;text-align:left;width:100%;white-space:nowrap;overflow:hidden;}
@@ -54,7 +55,14 @@ body{font-family:'Poppins',sans-serif;background:var(--body);color:var(--ink);li
 
 .main-content{flex:1;min-width:0;}
 
-.periodo-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--line);padding:12px 28px;}
+.page-header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:26px 28px 10px;}
+.page-title{font-family:'Poppins',sans-serif;font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.2px;}
+.live-pill{display:inline-flex;align-items:center;gap:7px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;color:var(--green);background:var(--green-l);border:1px solid #A7F3D0;padding:6px 14px;border-radius:20px;white-space:nowrap;}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);position:relative;flex-shrink:0;}
+.live-dot::before{content:"";position:absolute;inset:-4px;border-radius:50%;background:var(--green);opacity:.3;animation:live-pulse 1.8s ease-out infinite;}
+@keyframes live-pulse{0%{transform:scale(.6);opacity:.5;}100%{transform:scale(1.8);opacity:0;}}
+
+.periodo-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--line);padding:16px 28px 18px;margin-top:6px;}
 .periodo-bar label{font-size:11px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.4px;display:flex;flex-direction:column;gap:3px;}
 .periodo-bar input[type=date]{font-family:'Poppins',sans-serif;font-size:12.5px;padding:7px 10px;border:1.5px solid var(--line2);border-radius:7px;color:var(--ink);background:#fff;}
 .periodo-bar input[type=date]:focus{outline:none;border-color:var(--av);}
@@ -250,20 +258,25 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
       <span class="logo-av">Averix</span><span class="logo-sep">+</span><span class="logo-em">e-Markeed</span>
     </div>
     <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Colapsar barra lateral">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      <i class="ti ti-chevron-left" style="font-size:16px;"></i>
     </button>
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showTab('tab-actual',this)"><span class="nav-icon">📊</span><span class="nav-label">Periodo</span></button>
-    <button class="nav-tab" onclick="showTab('tab-cotizador',this)"><span class="nav-icon">💰</span><span class="nav-label">Cotizador</span></button>
-    <button class="nav-tab" onclick="showTab('tab-historial',this)"><span class="nav-icon">📅</span><span class="nav-label">Historial</span></button>
-    <button class="nav-tab" onclick="showTab('tab-grafica',this)"><span class="nav-icon">📈</span><span class="nav-label">Tendencias</span></button>
+    <button class="nav-tab active" onclick="showTab('tab-actual',this)"><span class="nav-icon"><i class="ti ti-calendar-stats"></i></span><span class="nav-label">Periodo</span></button>
+    <button class="nav-tab" onclick="showTab('tab-cotizador',this)"><span class="nav-icon"><i class="ti ti-report-money"></i></span><span class="nav-label">Cotizador</span></button>
+    <button class="nav-tab" onclick="showTab('tab-historial',this)"><span class="nav-icon"><i class="ti ti-history"></i></span><span class="nav-label">Historial</span></button>
+    <button class="nav-tab" onclick="showTab('tab-grafica',this)"><span class="nav-icon"><i class="ti ti-chart-line"></i></span><span class="nav-label">Tendencias</span></button>
   </div>
   <div class="sidebar-foot">
-    <button class="nav-tab" onclick="imprimirPanel()"><span class="nav-icon">⎙</span><span class="nav-label">Exportar PDF</span></button>
+    <button class="nav-tab" onclick="imprimirPanel()"><span class="nav-icon"><i class="ti ti-file-download"></i></span><span class="nav-label">Exportar PDF</span></button>
   </div>
 </aside>
 <div class="main-content">
+
+<div class="page-header">
+  <span class="page-title">Resumen general</span>
+  <span class="live-pill"><span class="live-dot"></span>Datos en vivo</span>
+</div>
 
 <div class="periodo-bar">
   <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
@@ -432,6 +445,24 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
       <div class="card c-green"><div class="c-label">Leads totales</div><div class="c-value" id="co-leads">—</div><div class="c-sub" id="co-leads-sub">—</div></div>
       <div class="card c-gold"><div class="c-label">Negocios totales</div><div class="c-value" id="co-negocios">—</div><div class="c-sub" id="co-negocios-sub">—</div></div>
       <div class="card c-av"><div class="c-label">Cierres totales</div><div class="c-value" id="co-cierres">—</div><div class="c-sub" id="co-cierres-sub">—</div></div>
+    </div>
+  </div>
+
+  <!-- ORGÁNICO SITIO WEB -->
+  <div class="section-wrap">
+    <div class="section-bar">
+      <div class="section-pill" style="background:var(--general);">Orgánico</div>
+      <div class="section-title-bar">Leads de sitio web · sin campaña pagada (Home / Contacto)</div>
+    </div>
+    <div class="canal-block">
+      <table id="tblOrganico">
+        <thead><tr><th style="text-align:left;padding-left:12px;">Cuenta</th><th>Home</th><th>Contacto</th><th>Total</th></tr></thead>
+        <tbody>
+          <tr><td class="label">Averix</td><td class="calc" id="av-org-home">—</td><td class="calc" id="av-org-contacto">—</td><td class="calc" id="av-org-total">—</td></tr>
+          <tr><td class="label">e-Markeed</td><td class="calc" id="em-org-home">—</td><td class="calc" id="em-org-contacto">—</td><td class="calc" id="em-org-total">—</td></tr>
+        </tbody>
+        <tfoot><tr><td class="label">Total orgánico</td><td id="org-tot-home">—</td><td id="org-tot-contacto">—</td><td id="org-tot-total">—</td></tr></tfoot>
+      </table>
     </div>
   </div>
 </div>
@@ -965,7 +996,7 @@ function calcularCotizador(){
 async function sincronizar(){
   const fi=document.getElementById("fecha-inicio").value;
   const ff=document.getElementById("fecha-fin").value;
-  if(!fi||!ff||new Date(ff)<=new Date(fi)){alert("Revisa las fechas.");return;}
+  if(!fi||!ff||new Date(ff)<new Date(fi)){alert("Revisa las fechas.");return;}
   const btn=document.getElementById("btn-sync");btn.disabled=true;
   showStatus("loading","Consultando Meta Ads API + HubSpot...");
   try{
@@ -1006,6 +1037,11 @@ async function sincronizar(){
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
     buildPausadas("#tblEmMetaPausadas tbody",data.emMetaPausadas,"emMetaPausadas");
     buildGoogle(data.avGoogle);attachInputs();recalc();
+    const orgAv=d.organico?.averix||{home:0,contacto:0}, orgEm=d.organico?.emk||{home:0,contacto:0};
+    set("av-org-home",orgAv.home);set("av-org-contacto",orgAv.contacto);set("av-org-total",orgAv.home+orgAv.contacto);
+    set("em-org-home",orgEm.home);set("em-org-contacto",orgEm.contacto);set("em-org-total",orgEm.home+orgEm.contacto);
+    set("org-tot-home",orgAv.home+orgEm.home);set("org-tot-contacto",orgAv.contacto+orgEm.contacto);
+    set("org-tot-total",orgAv.home+orgAv.contacto+orgEm.home+orgEm.contacto);
     const d1=new Date(fi).toLocaleDateString("es-MX",{day:"numeric",month:"short"});
     const d2=new Date(ff).toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"});
     const tA=(d.totales?.averix?.Meta||0)+(d.totales?.averix?.Google||0),tE=d.totales?.emk?.Meta||0;
@@ -1017,6 +1053,7 @@ async function sincronizar(){
     buildActivas("#tblAvMetaActivas tbody",[]);buildPausadas("#tblAvMetaPausadas tbody",[]);
     buildActivas("#tblEmMetaActivas tbody",[]);buildPausadas("#tblEmMetaPausadas tbody",[]);
     buildGoogle(data.avGoogle);attachInputs();recalc();
+    ["av-org-home","av-org-contacto","av-org-total","em-org-home","em-org-contacto","em-org-total","org-tot-home","org-tot-contacto","org-tot-total"].forEach(id=>set(id,0));
     showStatus("warn","⚠️ "+err.message);
   }
   btn.disabled=false;
