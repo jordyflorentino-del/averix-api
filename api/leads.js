@@ -369,7 +369,7 @@ async function calcularNegocios(fi, ff, token, debug) {
       filterGroups: [{
         filters: [
           { propertyName: "estatus_del_lead", operator: "EQ", value: "Negocio Creado" },
-          { propertyName: "createdate", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
+          { propertyName: "first_deal_created_date", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
           { propertyName: "fuente_mkt", operator: "NEQ", value: "PROSPECCIÓN EN FRÍO" },
         ],
       }],
