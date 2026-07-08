@@ -449,6 +449,56 @@ async function calcularCierres(fi, ff, token, debug) {
   return resultado;
 }
 
+// ── NUEVO: Leads orgánicos de sitio web (Home / Contacto), vía el picklist "fuente_mkt" ──
+// Excluye a propósito "GOOGLE - Campaña de Google" (esa ya se cuenta en getGoogleLeads vía hs_analytics_source)
+const FUENTE_MKT_HOME = "Sitio Web/Home - Orgánico Sitio web";
+const FUENTE_MKT_CONTACTO = "Sitio Web/Contacto - Orgánico Sitio web";
+
+async function calcularOrganicoWeb(fi, ff, token, debug) {
+  const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
+  const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
+  const resultado = { averix: { home: 0, contacto: 0 }, emk: { home: 0, contacto: 0 } };
+  const contactos = [];
+  let after;
+  const statusCodes = [];
+
+  do {
+    const body = {
+      filterGroups: [{
+        filters: [
+          { propertyName: "createdate", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
+          { propertyName: "fuente_mkt", operator: "IN", values: [FUENTE_MKT_HOME, FUENTE_MKT_CONTACTO] },
+        ],
+      }],
+      properties: ["empresa_interna", "fuente_mkt"],
+      limit: 200,
+      ...(after ? { after } : {}),
+    };
+    const { status, body: data } = await hsPost(body, token);
+    statusCodes.push(status);
+    if (status !== 200) break;
+
+    contactos.push(...(data.results ?? []));
+    after = data.paging?.next?.after;
+  } while (after);
+
+  if (debug) {
+    debug.organicoSearchStatus = statusCodes;
+    debug.totalOrganicoContactos = contactos.length;
+  }
+
+  for (const c of contactos) {
+    const p = c.properties || {};
+    const cuenta = getCuentaFromEmpresaInterna(p.empresa_interna);
+    if (cuenta !== "averix" && cuenta !== "emk") continue;
+
+    const pagina = p.fuente_mkt === FUENTE_MKT_HOME ? "home" : "contacto";
+    resultado[cuenta][pagina]++;
+  }
+
+  return resultado;
+}
+
 // ── Combina los resultados de Negocios y Cierres en un solo mapa por campaña ──
 function mergePorCampana(negociosPorCampana, cierresPorCampana) {
   const merged = {};
@@ -532,6 +582,11 @@ module.exports = async function handler(req, res) {
 
       resultado.negociosPorCampana = mergePorCampana(negocios.porCampana, cierres.porCampana);
       resultado.fuente.deals = "HubSpot Deals ✅";
+
+      // Leads orgánicos de sitio web (Home / Contacto) — no incluye "GOOGLE - Campaña de Google"
+      const organico = await calcularOrganicoWeb(fi, ff, HS_TOKEN, debug);
+      resultado.organico = organico;
+      resultado.fuente.organico = "HubSpot fuente_mkt ✅";
     } else {
       resultado.fuente.hubspot = "HUBSPOT_TOKEN no configurado ⚠️";
     }
@@ -541,6 +596,8 @@ module.exports = async function handler(req, res) {
     // Totales (corregido: sumar .leads de cada campaña, no el objeto completo)
     const totalAvMeta = Object.values(resultado.averix.Meta).reduce((a, b) => a + (b.leads || 0), 0);
     const totalEmMeta = Object.values(resultado.emk.Meta).reduce((a, b) => a + (b.leads || 0), 0);
+    const orgAv = resultado.organico?.averix || { home: 0, contacto: 0 };
+    const orgEm = resultado.organico?.emk || { home: 0, contacto: 0 };
     resultado.totales = {
       averix: {
         Meta: totalAvMeta,
@@ -548,6 +605,8 @@ module.exports = async function handler(req, res) {
         MQLtoSQL: resultado.averix.MQLtoSQL,
         Negocios: resultado.averix.Negocios,
         Cierres: resultado.averix.Cierres,
+        OrganicoHome: orgAv.home,
+        OrganicoContacto: orgAv.contacto,
       },
       emk: {
         Meta: totalEmMeta,
@@ -555,6 +614,8 @@ module.exports = async function handler(req, res) {
         MQLtoSQL: resultado.emk.MQLtoSQL,
         Negocios: resultado.emk.Negocios,
         Cierres: resultado.emk.Cierres,
+        OrganicoHome: orgEm.home,
+        OrganicoContacto: orgEm.contacto,
       },
     };
 
