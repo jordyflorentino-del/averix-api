@@ -286,11 +286,16 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
         <tbody></tbody>
         <tfoot><tr><td class="label">Total Meta</td><td></td><td id="av-ma-g">—</td><td id="av-ma-l">—</td><td id="av-ma-n">—</td><td id="av-ma-c">—</td><td id="av-ma-cpl">—</td><td id="av-ma-cpn">—</td><td id="av-ma-cpa">—</td></tr></tfoot>
       </table>
+      <div class="pres-row" id="av-sin-campana-box" style="display:none;">
+        <span style="font-size:11.5px;color:var(--mute);">⚠️ Negocios/Cierres de HubSpot sin campaña de origen registrada (no se pueden asignar a una fila específica):</span>
+        <span style="font-size:12px;font-weight:700;color:var(--av);">Negocios: <span id="av-sin-campana-neg">0</span></span>
+        <span style="font-size:12px;font-weight:700;color:var(--av);">Cierres: <span id="av-sin-campana-cierres">0</span></span>
+      </div>
       <div>
         <div class="pausadas-toggle" onclick="togglePausadas('av-meta')"><span id="av-meta-icon">▶</span><span id="av-meta-lbl">Ver pausadas / inactivas</span></div>
         <div class="pausadas-container" id="av-meta-pausadas">
           <table id="tblAvMetaPausadas" style="opacity:.75;">
-            <thead><tr><th>Campaña</th><th>Producto</th><th>Gasto</th><th>Leads</th><th>Estado</th><th>Motivo de pausa</th></tr></thead>
+            <thead><tr><th>Campaña</th><th>Producto</th><th>Gasto</th><th>Leads</th><th>Negocios</th><th>Cierres</th><th>CPL</th><th>CPN</th><th>CPA</th><th>Estado</th><th>Motivo de pausa</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -343,11 +348,16 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
         <tbody></tbody>
         <tfoot><tr><td class="label">Total Meta</td><td id="em-ma-g">—</td><td id="em-ma-l">—</td><td id="em-ma-n">—</td><td id="em-ma-c">—</td><td id="em-ma-cpl">—</td><td id="em-ma-cpn">—</td><td id="em-ma-cpa">—</td></tr></tfoot>
       </table>
+      <div class="pres-row" id="em-sin-campana-box" style="display:none;">
+        <span style="font-size:11.5px;color:var(--mute);">⚠️ Negocios/Cierres de HubSpot sin campaña de origen registrada:</span>
+        <span style="font-size:12px;font-weight:700;color:var(--em);">Negocios: <span id="em-sin-campana-neg">0</span></span>
+        <span style="font-size:12px;font-weight:700;color:var(--em);">Cierres: <span id="em-sin-campana-cierres">0</span></span>
+      </div>
       <div>
         <div class="pausadas-toggle" onclick="togglePausadas('em-meta')"><span id="em-meta-icon">▶</span><span id="em-meta-lbl">Ver pausadas / inactivas</span></div>
         <div class="pausadas-container" id="em-meta-pausadas">
           <table class="em-tbl" id="tblEmMetaPausadas" style="opacity:.75;">
-            <thead><tr><th>Campaña</th><th>Gasto</th><th>Leads</th><th>Estado</th><th>Motivo de pausa</th></tr></thead>
+            <thead><tr><th>Campaña</th><th>Gasto</th><th>Leads</th><th>Negocios</th><th>Cierres</th><th>CPL</th><th>CPN</th><th>CPA</th><th>Estado</th><th>Motivo de pausa</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -635,10 +645,16 @@ function buildPausadas(sel,rows,key){
     const prod=r.producto||getProducto(r.canal);
     const tr=document.createElement("tr");
     const prodCol=isAv?`<td>${productoBadge(prod)}</td>`:"";
+    const neg=r.neg||0,cierres=r.cierres||0,gasto=r.gasto||0,leads=r.leads||0;
     tr.innerHTML=`<td class="label">${r.canal}</td>
       ${prodCol}
-      <td class="gasto-val">${fmtMXN(r.gasto||0)}</td>
-      <td>${r.leads||0}</td>
+      <td class="gasto-val">${fmtMXN(gasto)}</td>
+      <td>${leads}</td>
+      <td class="hs">${neg}</td>
+      <td class="hs">${cierres}</td>
+      <td class="calc">${cell(safeDiv(gasto,leads))}</td>
+      <td class="calc">${cell(safeDiv(gasto,neg))}</td>
+      <td class="calc">${cell(safeDiv(gasto,cierres))}</td>
       <td>${statusBadge(r.status)}</td>
       <td><textarea class="comentario-input" rows="1" placeholder="¿Por qué se pausó?" oninput="saveComentario(this,'${key}',${realIdx})">${r.comentario||""}</textarea></td>`;
     tb.appendChild(tr);
@@ -902,13 +918,21 @@ async function sincronizar(){
       return porCampana[norm]||{negocios:0,cierres:0};
     };
     data.avMetaActivas=Object.entries(avM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>{const nc=negCierresPara(n);return{canal:n,gasto:v.spend||0,leads:v.leads||0,neg:nc.negocios,cierres:nc.cierres,status:v.status,comentario:"",producto:getProducto(n)};});
-    data.avMetaPausadas=Object.entries(avM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:"",producto:getProducto(n)}));
+    data.avMetaPausadas=Object.entries(avM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>{const nc=negCierresPara(n);return{canal:n,gasto:v.spend||0,leads:v.leads||0,neg:nc.negocios,cierres:nc.cierres,status:v.status,comentario:"",producto:getProducto(n)};});
     data.emMetaActivas=Object.entries(emM).filter(([,v])=>v.status==="ACTIVE"&&(v.leads>0||v.spend>0)).map(([n,v])=>{const nc=negCierresPara(n);return{canal:n,gasto:v.spend||0,leads:v.leads||0,neg:nc.negocios,cierres:nc.cierres,status:v.status,comentario:""};});
-    data.emMetaPausadas=Object.entries(emM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>({canal:n,gasto:v.spend||0,leads:v.leads||0,status:v.status,comentario:""}));
+    data.emMetaPausadas=Object.entries(emM).filter(([,v])=>v.status!=="ACTIVE").map(([n,v])=>{const nc=negCierresPara(n);return{canal:n,gasto:v.spend||0,leads:v.leads||0,neg:nc.negocios,cierres:nc.cierres,status:v.status,comentario:""};});
     const googleLeads = d.totales?.averix?.Google || 0;
     const googleNeg = d.averix?.NegociosGoogle || 0;
     const googleCierres = d.averix?.CierresGoogle || 0;
     data.avGoogle=[{canal:"Google Ads",gasto:parseFloat(document.getElementById("gasto-google-av")?.value)||0,leads:googleLeads,neg:googleNeg,cierres:googleCierres}];
+
+    // Negocios/Cierres sin campaña de origen registrada en HubSpot
+    const avSinNeg=d.averix?.NegociosSinCampana||0, avSinCierres=d.averix?.CierresSinCampana||0;
+    const emSinNeg=d.emk?.NegociosSinCampana||0, emSinCierres=d.emk?.CierresSinCampana||0;
+    const avSinBox=document.getElementById("av-sin-campana-box");
+    if(avSinBox){avSinBox.style.display=(avSinNeg>0||avSinCierres>0)?"flex":"none";set("av-sin-campana-neg",avSinNeg);set("av-sin-campana-cierres",avSinCierres);}
+    const emSinBox=document.getElementById("em-sin-campana-box");
+    if(emSinBox){emSinBox.style.display=(emSinNeg>0||emSinCierres>0)?"flex":"none";set("em-sin-campana-neg",emSinNeg);set("em-sin-campana-cierres",emSinCierres);}
     buildActivas("#tblAvMetaActivas tbody",data.avMetaActivas,"avMetaActivas");
     buildPausadas("#tblAvMetaPausadas tbody",data.avMetaPausadas,"avMetaPausadas");
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
