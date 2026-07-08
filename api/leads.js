@@ -359,7 +359,7 @@ async function getContactsBatch(contactIds, token, debug) {
 async function calcularNegocios(fi, ff, token, debug) {
   const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
   const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
-  const resultado = { averix: 0, emk: 0, averixGoogle: 0, porCampana: {} };
+  const resultado = { averix: 0, emk: 0, averixGoogle: 0, averixSinCampana: 0, emkSinCampana: 0, porCampana: {} };
   const contactos = [];
   let after;
   const statusCodes = [];
@@ -402,6 +402,9 @@ async function calcularNegocios(fi, ff, token, debug) {
     if (campNorm) {
       if (!resultado.porCampana[campNorm]) resultado.porCampana[campNorm] = 0;
       resultado.porCampana[campNorm]++;
+    } else {
+      if (cuenta === "averix") resultado.averixSinCampana++;
+      else resultado.emkSinCampana++;
     }
   }
 
@@ -410,7 +413,7 @@ async function calcularNegocios(fi, ff, token, debug) {
 
 // ── NUEVO: Cierres (deals cerrados-ganados en el periodo, vía hs_is_closed_won) ──
 async function calcularCierres(fi, ff, token, debug) {
-  const resultado = { averix: 0, emk: 0, averixGoogle: 0, porCampana: {} };
+  const resultado = { averix: 0, emk: 0, averixGoogle: 0, averixSinCampana: 0, emkSinCampana: 0, porCampana: {} };
 
   const dealsCerrados = await getDealsPorFecha(fi, ff, token, "closedate", true, debug);
   if (debug) debug.totalDealsCerradosGanadosEnPeriodo = dealsCerrados.length;
@@ -437,6 +440,9 @@ async function calcularCierres(fi, ff, token, debug) {
     if (campNorm) {
       if (!resultado.porCampana[campNorm]) resultado.porCampana[campNorm] = 0;
       resultado.porCampana[campNorm]++;
+    } else {
+      if (cuenta === "averix") resultado.averixSinCampana++;
+      else resultado.emkSinCampana++;
     }
   }
 
@@ -513,12 +519,16 @@ module.exports = async function handler(req, res) {
       resultado.averix.Negocios = negocios.averix;
       resultado.emk.Negocios    = negocios.emk;
       resultado.averix.NegociosGoogle = negocios.averixGoogle;
+      resultado.averix.NegociosSinCampana = negocios.averixSinCampana;
+      resultado.emk.NegociosSinCampana    = negocios.emkSinCampana;
 
       // Cierres: deals cerrados-ganados en el periodo (hs_is_closed_won)
       const cierres = await calcularCierres(fi, ff, HS_TOKEN, debug);
       resultado.averix.Cierres = cierres.averix;
       resultado.emk.Cierres    = cierres.emk;
       resultado.averix.CierresGoogle = cierres.averixGoogle;
+      resultado.averix.CierresSinCampana = cierres.averixSinCampana;
+      resultado.emk.CierresSinCampana    = cierres.emkSinCampana;
 
       resultado.negociosPorCampana = mergePorCampana(negocios.porCampana, cierres.porCampana);
       resultado.fuente.deals = "HubSpot Deals ✅";
