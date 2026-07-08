@@ -23,15 +23,36 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Poppins',sans-serif;background:var(--body);color:var(--ink);line-height:1.5;}
 
-.top-nav{display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:56px;background:#fff;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:100;}
-.nav-logo{display:flex;align-items:center;gap:6px;}
-.logo-av{font-size:17px;font-weight:800;color:var(--av);}
-.logo-sep{color:var(--line2);}
-.logo-em{font-size:17px;font-weight:800;color:var(--em);}
-.nav-tabs{display:flex;gap:2px;}
-.nav-tab{font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:7px;border:none;cursor:pointer;background:transparent;color:var(--mute);transition:all .15s;}
+.app-shell{display:flex;min-height:100vh;}
+
+.sidebar{width:220px;flex-shrink:0;background:#0B1F3A;color:#fff;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto;transition:width .2s ease;z-index:100;}
+.sidebar.collapsed{width:64px;}
+.sidebar-head{display:flex;align-items:center;gap:8px;padding:16px 14px;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap;overflow:hidden;}
+.sidebar.collapsed .sidebar-head{padding:16px 0;justify-content:center;}
+.nav-logo{display:flex;align-items:center;gap:5px;overflow:hidden;}
+.logo-av{font-size:15px;font-weight:800;color:#fff;}
+.logo-sep{color:rgba(255,255,255,.35);font-size:13px;}
+.logo-em{font-size:15px;font-weight:800;color:#fff;}
+.sidebar.collapsed .nav-logo{display:none;}
+.sidebar-toggle{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.55);cursor:pointer;padding:5px;border-radius:6px;display:flex;flex-shrink:0;}
+.sidebar-toggle:hover{background:rgba(255,255,255,.08);color:#fff;}
+.sidebar.collapsed .sidebar-toggle{margin-left:0;}
+.sidebar.collapsed .sidebar-toggle svg{transform:rotate(180deg);}
+
+.nav-tabs{display:flex;flex-direction:column;gap:2px;padding:10px 8px;flex:1;}
+.nav-tab{font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;border:none;cursor:pointer;background:transparent;color:rgba(255,255,255,.72);transition:all .15s;display:flex;align-items:center;gap:10px;text-align:left;width:100%;white-space:nowrap;overflow:hidden;}
 .nav-tab.active{background:var(--av);color:#fff;}
-.nav-tab:hover:not(.active){background:var(--av-l);color:var(--av);}
+.nav-tab:hover:not(.active){background:rgba(255,255,255,.07);color:#fff;}
+.nav-icon{font-size:15px;flex-shrink:0;}
+.nav-label{overflow:hidden;text-overflow:ellipsis;}
+.sidebar.collapsed .nav-tab{justify-content:center;padding:10px 0;}
+.sidebar.collapsed .nav-label{display:none;}
+
+.sidebar-foot{padding:10px 8px;border-top:1px solid rgba(255,255,255,.1);}
+.sidebar-foot .nav-tab{color:rgba(255,255,255,.6);}
+.sidebar-foot .nav-tab:hover{background:rgba(255,255,255,.07);color:#fff;}
+
+.main-content{flex:1;min-width:0;}
 
 .periodo-bar{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;background:#fff;border-bottom:1px solid var(--line);padding:12px 28px;}
 .periodo-bar label{font-size:11px;font-weight:600;color:var(--mute);text-transform:uppercase;letter-spacing:.4px;display:flex;flex-direction:column;gap:3px;}
@@ -216,24 +237,33 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 .chart-controls label{font-size:11.5px;font-weight:600;color:var(--mute);}
 .chart-controls select{font-family:'Poppins',sans-serif;font-size:12px;padding:6px 10px;border-radius:7px;border:1.5px solid var(--line2);background:#fff;color:var(--ink);}
 
-@media print{.top-nav,.save-bar,.periodo-bar button,.sync-status{display:none!important;}.tab-panel{display:block!important;}button{display:none!important;}}
-@media(max-width:800px){.cards,.stats3{grid-template-columns:repeat(2,1fr);}.bar-row .bamt{display:none;}.cotiz-grid{grid-template-columns:1fr;}.tab-panel,.periodo-bar,.sync-status{padding-left:14px;padding-right:14px;margin-left:0;margin-right:0;}}
+@media print{.sidebar,.save-bar,.periodo-bar button,.sync-status{display:none!important;}.tab-panel{display:block!important;}button{display:none!important;}}
+@media(max-width:800px){.cards,.stats3{grid-template-columns:repeat(2,1fr);}.bar-row .bamt{display:none;}.cotiz-grid{grid-template-columns:1fr;}.tab-panel,.periodo-bar,.sync-status{padding-left:14px;padding-right:14px;margin-left:0;margin-right:0;}.sidebar{position:fixed;left:0;top:0;bottom:0;width:64px;}.sidebar .nav-logo,.sidebar .nav-label{display:none;}.sidebar.collapsed{width:220px;}.sidebar.collapsed .nav-label{display:inline;}.sidebar.collapsed .nav-logo{display:flex;}.main-content{margin-left:64px;}}
 </style>
 </head>
 <body>
 
-<div class="top-nav">
-  <div class="nav-logo">
-    <span class="logo-av">Averix</span><span class="logo-sep"> + </span><span class="logo-em">e-Markeed</span>
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-head">
+    <div class="nav-logo">
+      <span class="logo-av">Averix</span><span class="logo-sep">+</span><span class="logo-em">e-Markeed</span>
+    </div>
+    <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Colapsar barra lateral">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+    </button>
   </div>
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showTab('tab-actual',this)">📊 Periodo</button>
-    <button class="nav-tab" onclick="showTab('tab-cotizador',this)">💰 Cotizador</button>
-    <button class="nav-tab" onclick="showTab('tab-historial',this)">📅 Historial</button>
-    <button class="nav-tab" onclick="showTab('tab-grafica',this)">📈 Tendencias</button>
+    <button class="nav-tab active" onclick="showTab('tab-actual',this)"><span class="nav-icon">📊</span><span class="nav-label">Periodo</span></button>
+    <button class="nav-tab" onclick="showTab('tab-cotizador',this)"><span class="nav-icon">💰</span><span class="nav-label">Cotizador</span></button>
+    <button class="nav-tab" onclick="showTab('tab-historial',this)"><span class="nav-icon">📅</span><span class="nav-label">Historial</span></button>
+    <button class="nav-tab" onclick="showTab('tab-grafica',this)"><span class="nav-icon">📈</span><span class="nav-label">Tendencias</span></button>
   </div>
-  <button class="btn-ghost" style="font-size:11px;" onclick="imprimirPanel()">⎙ PDF</button>
-</div>
+  <div class="sidebar-foot">
+    <button class="nav-tab" onclick="imprimirPanel()"><span class="nav-icon">⎙</span><span class="nav-label">Exportar PDF</span></button>
+  </div>
+</aside>
+<div class="main-content">
 
 <div class="periodo-bar">
   <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
@@ -483,6 +513,14 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 
 <div class="note-foot">e-Markeed · Panel Averix México · 2026</div>
 
+</div>
+</div>
+
+<script>
+function toggleSidebar(){
+  document.getElementById("sidebar").classList.toggle("collapsed");
+}
+</script>
 <script>
 // ══ MAPEO PRODUCTO ══
 // Clasifica cada campaña en un producto según su nombre
