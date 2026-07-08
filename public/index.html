@@ -574,7 +574,7 @@ const HISTORIAL_PRELOAD=[
 ];
 
 // ══ ESTADO ══
-let data={avMetaActivas:[],avMetaPausadas:[],emMetaActivas:[],emMetaPausadas:[],avGoogle:[]};
+let data={avMetaActivas:[],avMetaPausadas:[],emMetaActivas:[],emMetaPausadas:[],avGoogle:[],totalNegociosAverix:0,totalCierresAverix:0,totalNegociosEmk:0,totalCierresEmk:0};
 let historial=[];
 let editingIdx=null;
 let filtroProducto="all";
@@ -818,19 +818,22 @@ function recalc(){
   set("em-vspres-sub",sE+fmtPct(Math.abs(pME>0?dE/pME*100:0))+(Math.abs(pME>0?dE/pME*100:0)<=10?" · on target":" · revisar"));
 
   // Consolidado: Averix filtrado + e-Markeed completo
-  const cG=aTG+em.gasto,cL=aTL+em.leads,cC=aTC+em.cierres,cP=aTP+pME,cN=aTN+em.neg;
+  // Negocios/Cierres totales usan el dato REAL del API (incluye etiquetados + sin campaña + pausadas), no la suma de filas visibles
+  const totalNegociosReal = (data.totalNegociosAverix||0) + (data.totalNegociosEmk||0);
+  const totalCierresReal  = (data.totalCierresAverix||0)  + (data.totalCierresEmk||0);
+  const cG=aTG+em.gasto,cL=aTL+em.leads,cC=totalCierresReal,cP=aTP+pME,cN=totalNegociosReal;
   set("co-pres",fmtMXN(cP));set("co-gasto",fmtMXN(cG));set("co-leads",cL);set("co-cierres",cC);set("co-negocios",cN);
   set("co-gasto-sub",`${fmtMXN(aTG)} Averix (${prodLabel}) · ${fmtMXN(em.gasto)} e-Markeed`);
   set("co-leads-sub",`${aTL} Averix · ${em.leads} e-Markeed`);
-  set("co-negocios-sub",`${aTN} Averix · ${em.neg} e-Markeed`);
-  set("co-cierres-sub",`${aTC} Averix · ${em.cierres} e-Markeed`);
+  set("co-negocios-sub",`${data.totalNegociosAverix||0} Averix · ${data.totalNegociosEmk||0} e-Markeed`);
+  set("co-cierres-sub",`${data.totalCierresAverix||0} Averix · ${data.totalCierresEmk||0} e-Markeed`);
 
   // Panel de resumen general (arriba de la página)
   set("sum-gasto",fmtMXN(cG));set("sum-leads",cL);set("sum-negocios",cN);set("sum-cierres",cC);
   set("sum-gasto-sub",`${fmtMXN(aTG)} Averix · ${fmtMXN(em.gasto)} e-Markeed`);
   set("sum-leads-sub",`${aTL} Averix · ${em.leads} e-Markeed`);
-  set("sum-negocios-sub",`${aTN} Averix · ${em.neg} e-Markeed`);
-  set("sum-cierres-sub",`${aTC} Averix · ${em.cierres} e-Markeed`);
+  set("sum-negocios-sub",`${data.totalNegociosAverix||0} Averix · ${data.totalNegociosEmk||0} e-Markeed`);
+  set("sum-cierres-sub",`${data.totalCierresAverix||0} Averix · ${data.totalCierresEmk||0} e-Markeed`);
 
   ["av-meta","em-meta"].forEach(id=>{
     const count=id==="av-meta"?data.avMetaPausadas.length:data.emMetaPausadas.length;
@@ -954,6 +957,12 @@ async function sincronizar(){
     if(avSinBox){avSinBox.style.display=(avSinNeg>0||avSinCierres>0)?"flex":"none";set("av-sin-campana-neg",avSinNeg);set("av-sin-campana-cierres",avSinCierres);}
     const emSinBox=document.getElementById("em-sin-campana-box");
     if(emSinBox){emSinBox.style.display=(emSinNeg>0||emSinCierres>0)?"flex":"none";set("em-sin-campana-neg",emSinNeg);set("em-sin-campana-cierres",emSinCierres);}
+
+    // Totales REALES de Negocios/Cierres (incluyen etiquetados + sin campaña + pausadas) para los paneles de resumen
+    data.totalNegociosAverix = d.averix?.Negocios || 0;
+    data.totalCierresAverix  = d.averix?.Cierres  || 0;
+    data.totalNegociosEmk    = d.emk?.Negocios    || 0;
+    data.totalCierresEmk     = d.emk?.Cierres     || 0;
     buildActivas("#tblAvMetaActivas tbody",data.avMetaActivas,"avMetaActivas");
     buildPausadas("#tblAvMetaPausadas tbody",data.avMetaPausadas,"avMetaPausadas");
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
@@ -966,6 +975,7 @@ async function sincronizar(){
   }catch(err){
     data.avMetaActivas=[];data.avMetaPausadas=[];data.emMetaActivas=[];data.emMetaPausadas=[];
     data.avGoogle=[{canal:"Google Ads",gasto:0,leads:0,neg:0,cierres:0}];
+    data.totalNegociosAverix=0;data.totalCierresAverix=0;data.totalNegociosEmk=0;data.totalCierresEmk=0;
     buildActivas("#tblAvMetaActivas tbody",[]);buildPausadas("#tblAvMetaPausadas tbody",[]);
     buildActivas("#tblEmMetaActivas tbody",[]);buildPausadas("#tblEmMetaPausadas tbody",[]);
     buildGoogle(data.avGoogle);attachInputs();recalc();
@@ -1159,7 +1169,7 @@ function imprimirPanel(){
 }
 
 function resetData(){
-  data={avMetaActivas:[],avMetaPausadas:[],emMetaActivas:[],emMetaPausadas:[],avGoogle:[]};
+  data={avMetaActivas:[],avMetaPausadas:[],emMetaActivas:[],emMetaPausadas:[],avGoogle:[],totalNegociosAverix:0,totalCierresAverix:0,totalNegociosEmk:0,totalCierresEmk:0};
   editingIdx=null;
   document.getElementById("editing-badge").style.display="none";
   document.getElementById("mes-nombre").value="";
