@@ -281,7 +281,7 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 <div class="periodo-bar">
   <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
   <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-30"></label>
-  <button class="btn-primary" id="btn-sync" onclick="sincronizar()">🔄 Cargar periodo</button>
+  <button class="btn-primary" id="btn-sync" onclick="sincronizar()"><i class="ti ti-refresh" style="margin-right:4px;"></i>Cargar periodo</button>
 </div>
 <div id="sync-status" style="display:none;"></div>
 
@@ -290,8 +290,8 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
   <div class="save-bar">
     <label>Guardar como</label>
     <input type="text" id="mes-nombre" placeholder="ej. Junio 2026" maxlength="50">
-    <button class="btn-save" onclick="guardarMes()">💾 Guardar</button>
-    <button class="btn-ghost" onclick="resetData()">↺ Limpiar</button>
+    <button class="btn-save" onclick="guardarMes()"><i class="ti ti-device-floppy" style="margin-right:4px;"></i>Guardar</button>
+    <button class="btn-ghost" onclick="resetData()"><i class="ti ti-eraser" style="margin-right:4px;"></i>Limpiar</button>
     <span id="editing-badge" class="badge-editing" style="display:none;">Editando periodo</span>
   </div>
 
@@ -315,11 +315,11 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 
   <!-- FILTRO PRODUCTO -->
   <div class="producto-tabs">
-    <button class="prod-tab all active" onclick="filtrarProducto('all',this)">🔍 Todos</button>
-    <button class="prod-tab vendia" onclick="filtrarProducto('vendia',this)">🛒 Vendía</button>
-    <button class="prod-tab broadcaster" onclick="filtrarProducto('broadcaster',this)">📡 BroadcasterBot</button>
-    <button class="prod-tab omia" onclick="filtrarProducto('omia',this)">🤖 Omia</button>
-    <button class="prod-tab general" onclick="filtrarProducto('general',this)">🏢 Averix General</button>
+    <button class="prod-tab all active" onclick="filtrarProducto('all',this)"><i class="ti ti-apps" style="margin-right:4px;"></i>Todos</button>
+    <button class="prod-tab vendia" onclick="filtrarProducto('vendia',this)"><i class="ti ti-shopping-cart" style="margin-right:4px;"></i>Vendía</button>
+    <button class="prod-tab broadcaster" onclick="filtrarProducto('broadcaster',this)"><i class="ti ti-broadcast" style="margin-right:4px;"></i>BroadcasterBot</button>
+    <button class="prod-tab omia" onclick="filtrarProducto('omia',this)"><i class="ti ti-robot" style="margin-right:4px;"></i>Omia</button>
+    <button class="prod-tab general" onclick="filtrarProducto('general',this)"><i class="ti ti-building" style="margin-right:4px;"></i>Averix General</button>
   </div>
 
   <!-- AVERIX -->
@@ -342,12 +342,12 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
         <tfoot><tr><td class="label">Total Meta</td><td></td><td id="av-ma-g">—</td><td id="av-ma-l">—</td><td id="av-ma-n">—</td><td id="av-ma-c">—</td><td id="av-ma-cpl">—</td><td id="av-ma-cpn">—</td><td id="av-ma-cpa">—</td></tr></tfoot>
       </table>
       <div class="pres-row" id="av-sin-campana-box" style="display:none;">
-        <span style="font-size:11.5px;color:var(--mute);">⚠️ Negocios/Cierres de HubSpot sin campaña de origen registrada (no se pueden asignar a una fila específica):</span>
+        <span style="font-size:11.5px;color:var(--mute);"><i class="ti ti-alert-triangle" style="color:var(--gold);margin-right:4px;"></i>Negocios/Cierres de HubSpot sin campaña de origen registrada (no se pueden asignar a una fila específica):</span>
         <span style="font-size:12px;font-weight:700;color:var(--av);">Negocios: <span id="av-sin-campana-neg">0</span></span>
         <span style="font-size:12px;font-weight:700;color:var(--av);">Cierres: <span id="av-sin-campana-cierres">0</span></span>
       </div>
       <div>
-        <div class="pausadas-toggle" onclick="togglePausadas('av-meta')"><span id="av-meta-icon">▶</span><span id="av-meta-lbl">Ver pausadas / inactivas</span></div>
+                <div class="pausadas-toggle" onclick="togglePausadas('av-meta')"><i class="ti ti-chevron-right" id="av-meta-icon"></i><span id="av-meta-lbl">Ver pausadas / inactivas</span></div>
         <div class="pausadas-container" id="av-meta-pausadas">
           <table id="tblAvMetaPausadas" style="opacity:.75;">
             <thead><tr><th>Campaña</th><th>Producto</th><th>Gasto</th><th>Leads</th><th>Negocios</th><th>Cierres</th><th>CPL</th><th>CPN</th><th>CPA</th><th>Estado</th><th>Motivo de pausa</th></tr></thead>
@@ -404,12 +404,12 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
         <tfoot><tr><td class="label">Total Meta</td><td id="em-ma-g">—</td><td id="em-ma-l">—</td><td id="em-ma-n">—</td><td id="em-ma-c">—</td><td id="em-ma-cpl">—</td><td id="em-ma-cpn">—</td><td id="em-ma-cpa">—</td></tr></tfoot>
       </table>
       <div class="pres-row" id="em-sin-campana-box" style="display:none;">
-        <span style="font-size:11.5px;color:var(--mute);">⚠️ Negocios/Cierres de HubSpot sin campaña de origen registrada:</span>
+        <span style="font-size:11.5px;color:var(--mute);"><i class="ti ti-alert-triangle" style="color:var(--gold);margin-right:4px;"></i>Negocios/Cierres de HubSpot sin campaña de origen registrada:</span>
         <span style="font-size:12px;font-weight:700;color:var(--em);">Negocios: <span id="em-sin-campana-neg">0</span></span>
         <span style="font-size:12px;font-weight:700;color:var(--em);">Cierres: <span id="em-sin-campana-cierres">0</span></span>
       </div>
       <div>
-        <div class="pausadas-toggle" onclick="togglePausadas('em-meta')"><span id="em-meta-icon">▶</span><span id="em-meta-lbl">Ver pausadas / inactivas</span></div>
+                <div class="pausadas-toggle" onclick="togglePausadas('em-meta')"><i class="ti ti-chevron-right" id="em-meta-icon"></i><span id="em-meta-lbl">Ver pausadas / inactivas</span></div>
         <div class="pausadas-container" id="em-meta-pausadas">
           <table class="em-tbl" id="tblEmMetaPausadas" style="opacity:.75;">
             <thead><tr><th>Campaña</th><th>Gasto</th><th>Leads</th><th>Negocios</th><th>Cierres</th><th>CPL</th><th>CPN</th><th>CPA</th><th>Estado</th><th>Motivo de pausa</th></tr></thead>
@@ -470,18 +470,18 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 <!-- ══ TAB COTIZADOR ══ -->
 <div class="tab-panel" id="tab-cotizador">
   <div class="cotizador">
-    <div class="cotizador-title">💰 Cotizador de costo de leads</div>
+    <div class="cotizador-title"><i class="ti ti-report-money" style="margin-right:6px;"></i>Cotizador de costo de leads</div>
     <div class="cotizador-sub">Basado en datos históricos reales de Meta Ads · Selecciona producto y calcula tu inversión estimada</div>
     <div class="cotiz-grid">
       <div class="cotiz-left">
         <div class="cotiz-field">
           <label>Producto</label>
           <select id="cotiz-producto" onchange="calcularCotizador()">
-            <option value="vendia">🛒 Vendía (Comercio por WhatsApp)</option>
-            <option value="broadcaster">📡 BroadcasterBot (Omnicanalidad)</option>
-            <option value="omia">🤖 Omia (Decisores B2B)</option>
-            <option value="emarkeed">🎯 e-Markeed</option>
-            <option value="all">🔍 Todos los productos</option>
+            <option value="vendia">Vendía (Comercio por WhatsApp)</option>
+            <option value="broadcaster">BroadcasterBot (Omnicanalidad)</option>
+            <option value="omia">Omia (Decisores B2B)</option>
+            <option value="emarkeed">e-Markeed</option>
+            <option value="all">Todos los productos</option>
           </select>
         </div>
         <div class="cotiz-field">
@@ -538,7 +538,7 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 <div class="tab-panel" id="tab-grafica">
   <div style="background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:20px;">
     <div style="font-size:15px;font-weight:700;color:var(--ink);margin-bottom:14px;">Tendencias históricas · desde Marzo 2026</div>
-    <div id="chart-content"><div class="empty-state"><div class="big">📈</div>Cargando...</div></div>
+    <div id="chart-content"><div class="empty-state"><div class="big"><i class="ti ti-chart-line"></i></div>Cargando...</div></div>
   </div>
 </div>
 
@@ -779,7 +779,7 @@ function togglePausadas(id){
   const icon=document.getElementById(id+"-icon");
   const lbl=document.getElementById(id+"-lbl");
   const open=c.classList.toggle("open");
-  icon.textContent=open?"▼":"▶";
+  icon.className=open?"ti ti-chevron-down":"ti ti-chevron-right";
   const count=id==="av-meta"?data.avMetaPausadas.length:data.emMetaPausadas.length;
   lbl.textContent=open?`Ocultar pausadas / inactivas (${count})`:`Ver pausadas / inactivas (${count})`;
 }
@@ -1045,7 +1045,7 @@ async function sincronizar(){
     const d1=new Date(fi).toLocaleDateString("es-MX",{day:"numeric",month:"short"});
     const d2=new Date(ff).toLocaleDateString("es-MX",{day:"numeric",month:"short",year:"numeric"});
     const tA=(d.totales?.averix?.Meta||0)+(d.totales?.averix?.Google||0),tE=d.totales?.emk?.Meta||0;
-    showStatus("ok",`✅ ${d1}–${d2} · Averix: ${tA} leads (${data.avMetaActivas.length} activas) · e-Markeed: ${tE} leads`);
+    showStatus("ok",`${d1}–${d2} · Averix: ${tA} leads (${data.avMetaActivas.length} activas) · e-Markeed: ${tE} leads`);
   }catch(err){
     data.avMetaActivas=[];data.avMetaPausadas=[];data.emMetaActivas=[];data.emMetaPausadas=[];
     data.avGoogle=[{canal:"Google Ads",gasto:0,leads:0,neg:0,cierres:0}];
@@ -1054,7 +1054,7 @@ async function sincronizar(){
     buildActivas("#tblEmMetaActivas tbody",[]);buildPausadas("#tblEmMetaPausadas tbody",[]);
     buildGoogle(data.avGoogle);attachInputs();recalc();
     ["av-org-home","av-org-contacto","av-org-total","em-org-home","em-org-contacto","em-org-total","org-tot-home","org-tot-contacto","org-tot-total"].forEach(id=>set(id,0));
-    showStatus("warn","⚠️ "+err.message);
+    showStatus("warn",err.message);
   }
   btn.disabled=false;
 }
@@ -1062,7 +1062,9 @@ async function sincronizar(){
 function showStatus(type,msg){
   const el=document.getElementById("sync-status");
   el.style.display="flex";el.className="sync-status "+type;
-  el.innerHTML=type==="loading"?`<div class="spinner"></div><span>${msg}</span>`:`<span>${msg}</span>`;
+  const icons={ok:"ti-circle-check",warn:"ti-alert-triangle",error:"ti-circle-x"};
+  const prefix=type==="loading"?`<div class="spinner"></div>`:`<i class="ti ${icons[type]||''}"></i>`;
+  el.innerHTML=`${prefix}<span>${msg}</span>`;
 }
 
 // ══ GUARDAR ══
@@ -1100,9 +1102,9 @@ function snapTotales(s){
 function renderHistorial(){
   const host=document.getElementById("hist-content");
   // historial ya está ordenado ASC
-  if(!historial.length){host.innerHTML='<div class="empty-state"><div class="big">📭</div>Sin periodos guardados.</div>';return;}
+  if(!historial.length){host.innerHTML='<div class="empty-state"><div class="big"><i class="ti ti-inbox"></i></div>Sin periodos guardados.</div>';return;}
   let html=`<div style="overflow-x:auto;"><table class="hist-tbl"><thead><tr>
-    <th style="text-align:left;padding-left:10px;">Periodo ↑</th><th>Fechas</th>
+    <th style="text-align:left;padding-left:10px;">Periodo <i class="ti ti-arrow-up" style="font-size:11px;"></i></th><th>Fechas</th>
     <th>Ptto Av.</th><th>Gasto Av.</th><th>Ptto eMk.</th><th>Gasto eMk.</th>
     <th>Leads</th><th>Neg.</th><th>Cierres</th><th>CPL</th><th>CPA</th><th>Acciones</th>
   </tr></thead><tbody>`;
@@ -1120,8 +1122,8 @@ function renderHistorial(){
       <td>${tN}</td><td>${tC}</td>
       <td>${cell(safeDiv(tG,tL))}</td><td>${cell(safeDiv(tG,tC))}</td>
       <td><div class="hist-actions">
-        <button class="btn-sm btn-ghost" onclick="cargarMes(${idx})">✏️</button>
-        <button class="btn-sm btn-danger" onclick="eliminarMes(${idx})">🗑</button>
+        <button class="btn-sm btn-ghost" onclick="cargarMes(${idx})"><i class="ti ti-pencil"></i></button>
+        <button class="btn-sm btn-danger" onclick="eliminarMes(${idx})"><i class="ti ti-trash"></i></button>
       </div></td></tr>`;
   });
   html+=`</tbody></table></div>`;host.innerHTML=html;
@@ -1160,7 +1162,7 @@ function cargarMes(idx){
 // ══ GRÁFICA (ASC) ══
 function renderGrafica(){
   const host=document.getElementById("chart-content");
-  if(historial.length<2){host.innerHTML='<div class="empty-state"><div class="big">📈</div>Guarda al menos 2 periodos.</div>';return;}
+  if(historial.length<2){host.innerHTML='<div class="empty-state"><div class="big"><i class="ti ti-chart-line"></i></div>Guarda al menos 2 periodos.</div>';return;}
   host.innerHTML=`<div class="chart-controls">
     <label>Métrica:</label>
     <select id="chart-metric">
