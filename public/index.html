@@ -448,6 +448,28 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
     </div>
   </div>
 
+  <!-- CONVERSIÓN MQL → SQL -->
+  <div class="section-wrap">
+    <div class="section-bar">
+      <div class="section-pill" style="background:var(--general);">Conversión</div>
+      <div class="section-title-bar">Tasa de conversión MQL <i class="ti ti-arrow-right" style="font-size:12px;"></i> SQL</div>
+    </div>
+    <div class="canal-block" style="padding:16px 14px;">
+      <div class="bar-row">
+        <div class="bname">Averix · MQL → SQL</div>
+        <div class="bar-track"><div class="bar-fill" id="mql-bar-av" style="width:0%;background:#1A56DB;"></div></div>
+        <div class="bpct" id="mql-pct-av">—</div>
+        <div class="bamt" id="mql-amt-av">—</div>
+      </div>
+      <div class="bar-row">
+        <div class="bname">e-Markeed · MQL → SQL</div>
+        <div class="bar-track"><div class="bar-fill" id="mql-bar-em" style="width:0%;background:#7E22CE;"></div></div>
+        <div class="bpct" id="mql-pct-em">—</div>
+        <div class="bamt" id="mql-amt-em">—</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ORGÁNICO SITIO WEB -->
   <div class="section-wrap">
     <div class="section-bar">
@@ -1037,6 +1059,15 @@ async function sincronizar(){
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
     buildPausadas("#tblEmMetaPausadas tbody",data.emMetaPausadas,"emMetaPausadas");
     buildGoogle(data.avGoogle);attachInputs();recalc();
+    const mqlAv=d.totales?.averix?.MQL||0, sqlAv=d.totales?.averix?.SQL||0;
+    const mqlEm=d.totales?.emk?.MQL||0, sqlEm=d.totales?.emk?.SQL||0;
+    const pctAv=mqlAv>0?(sqlAv/mqlAv*100):0, pctEm=mqlEm>0?(sqlEm/mqlEm*100):0;
+    document.getElementById("mql-bar-av").style.width=Math.min(pctAv,100)+"%";
+    document.getElementById("mql-pct-av").textContent=mqlAv>0?fmtPct(pctAv):"—";
+    document.getElementById("mql-amt-av").textContent=`${sqlAv} de ${mqlAv} MQL`;
+    document.getElementById("mql-bar-em").style.width=Math.min(pctEm,100)+"%";
+    document.getElementById("mql-pct-em").textContent=mqlEm>0?fmtPct(pctEm):"—";
+    document.getElementById("mql-amt-em").textContent=`${sqlEm} de ${mqlEm} MQL`;
     const orgAv=d.organico?.averix||{home:0,contacto:0}, orgEm=d.organico?.emk||{home:0,contacto:0};
     set("av-org-home",orgAv.home);set("av-org-contacto",orgAv.contacto);set("av-org-total",orgAv.home+orgAv.contacto);
     set("em-org-home",orgEm.home);set("em-org-contacto",orgEm.contacto);set("em-org-total",orgEm.home+orgEm.contacto);
@@ -1054,6 +1085,8 @@ async function sincronizar(){
     buildActivas("#tblEmMetaActivas tbody",[]);buildPausadas("#tblEmMetaPausadas tbody",[]);
     buildGoogle(data.avGoogle);attachInputs();recalc();
     ["av-org-home","av-org-contacto","av-org-total","em-org-home","em-org-contacto","em-org-total","org-tot-home","org-tot-contacto","org-tot-total"].forEach(id=>set(id,0));
+    document.getElementById("mql-bar-av").style.width="0%";document.getElementById("mql-pct-av").textContent="—";document.getElementById("mql-amt-av").textContent="—";
+    document.getElementById("mql-bar-em").style.width="0%";document.getElementById("mql-pct-em").textContent="—";document.getElementById("mql-amt-em").textContent="—";
     showStatus("warn",err.message);
   }
   btn.disabled=false;
