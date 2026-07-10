@@ -262,6 +262,49 @@ async function calcularMqlToSql(fi, ff, token, debug) {
   return resultado;
 }
 
+// ── NUEVO: MQL totales del periodo (entradas a la etapa MQL, sin importar si ya avanzaron a SQL) ──
+async function calcularMqlTotal(fi, ff, token, debug) {
+  const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
+  const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
+  const resultado = { averix: 0, emk: 0 };
+  const contactos = [];
+  let after;
+  const statusCodes = [];
+
+  do {
+    const body = {
+      filterGroups: [{
+        filters: [
+          { propertyName: "hs_v2_date_entered_marketingqualifiedlead", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
+        ],
+      }],
+      properties: ["empresa_interna", "hs_v2_date_entered_marketingqualifiedlead"],
+      limit: 200,
+      ...(after ? { after } : {}),
+    };
+    const { status, body: data } = await hsPost(body, token);
+    statusCodes.push(status);
+    if (status !== 200) break;
+
+    contactos.push(...(data.results ?? []));
+    after = data.paging?.next?.after;
+  } while (after);
+
+  if (debug) {
+    debug.mqlTotalSearchStatus = statusCodes;
+    debug.totalContactosEntraronAMqlEnPeriodo = contactos.length;
+  }
+
+  for (const c of contactos) {
+    const p = c.properties || {};
+    const cuenta = getCuentaFromEmpresaInterna(p.empresa_interna);
+    if (cuenta === "averix") resultado.averix++;
+    else if (cuenta === "emk") resultado.emk++;
+  }
+
+  return resultado;
+}
+
 // ── NUEVO: Deals creados o cerrados dentro del periodo ──
 async function getDealsPorFecha(fi, ff, token, campoFecha, soloCerradosGanados, debug) {
   const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
@@ -451,8 +494,8 @@ async function calcularCierres(fi, ff, token, debug) {
 
 // ── NUEVO: Leads orgánicos de sitio web (Home / Contacto), vía el picklist "fuente_mkt" ──
 // Excluye a propósito "GOOGLE - Campaña de Google" (esa ya se cuenta en getGoogleLeads vía hs_analytics_source)
-const FUENTE_MKT_HOME = "Sitio Web/Home - Orgánico Sitio web";
-const FUENTE_MKT_CONTACTO = "Sitio Web/Contacto - Orgánico Sitio web";
+const FUENTE_MKT_HOME = "Sitio Web/Home";
+const FUENTE_MKT_CONTACTO = "Sitio Web/Contacto";
 
 async function calcularOrganicoWeb(fi, ff, token, debug) {
   const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
@@ -562,6 +605,10 @@ module.exports = async function handler(req, res) {
       const mqlSql = await calcularMqlToSql(fi, ff, HS_TOKEN, debug);
       resultado.averix.MQLtoSQL = mqlSql.averix;
       resultado.emk.MQLtoSQL = mqlSql.emk;
+
+      const mqlTotal = await calcularMqlTotal(fi, ff, HS_TOKEN, debug);
+      resultado.averix.MQL = mqlTotal.averix;
+      resultado.emk.MQL = mqlTotal.emk;
       resultado.fuente.mql_sql = "HubSpot lifecycle stages ✅";
 
       // Negocios: contactos con Estatus del Lead = "Negocio Creado" (validado 1:1 contra HubSpot)
@@ -602,6 +649,8 @@ module.exports = async function handler(req, res) {
       averix: {
         Meta: totalAvMeta,
         Google: resultado.averix.Google,
+        MQL: resultado.averix.MQL,
+        SQL: resultado.averix.MQLtoSQL,
         MQLtoSQL: resultado.averix.MQLtoSQL,
         Negocios: resultado.averix.Negocios,
         Cierres: resultado.averix.Cierres,
@@ -611,6 +660,8 @@ module.exports = async function handler(req, res) {
       emk: {
         Meta: totalEmMeta,
         Google: 0,
+        MQL: resultado.emk.MQL,
+        SQL: resultado.emk.MQLtoSQL,
         MQLtoSQL: resultado.emk.MQLtoSQL,
         Negocios: resultado.emk.Negocios,
         Cierres: resultado.emk.Cierres,
