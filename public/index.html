@@ -279,8 +279,8 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
 </div>
 
 <div class="periodo-bar">
-  <label>Fecha inicio<input type="date" id="fecha-inicio" value="2026-06-01"></label>
-  <label>Fecha fin<input type="date" id="fecha-fin" value="2026-06-30"></label>
+  <label>Fecha inicio<input type="date" id="fecha-inicio"></label>
+  <label>Fecha fin<input type="date" id="fecha-fin"></label>
   <button class="btn-primary" id="btn-sync" onclick="sincronizar()"><i class="ti ti-refresh" style="margin-right:4px;"></i>Cargar periodo</button>
 </div>
 <div id="sync-status" style="display:none;"></div>
@@ -452,17 +452,17 @@ tfoot td.label{text-align:left;padding-left:12px;color:var(--av);}
   <div class="section-wrap">
     <div class="section-bar">
       <div class="section-pill" style="background:var(--general);">Conversión</div>
-      <div class="section-title-bar">Tasa de conversión MQL <i class="ti ti-arrow-right" style="font-size:12px;"></i> SQL</div>
+      <div class="section-title-bar">Tasa de conversión: leads totales <i class="ti ti-arrow-right" style="font-size:12px;"></i> Negocio Creado</div>
     </div>
     <div class="canal-block" style="padding:16px 14px;">
       <div class="bar-row">
-        <div class="bname">Averix · MQL → SQL</div>
+        <div class="bname">Averix · Leads → Negocio</div>
         <div class="bar-track"><div class="bar-fill" id="mql-bar-av" style="width:0%;background:#1A56DB;"></div></div>
         <div class="bpct" id="mql-pct-av">—</div>
         <div class="bamt" id="mql-amt-av">—</div>
       </div>
       <div class="bar-row">
-        <div class="bname">e-Markeed · MQL → SQL</div>
+        <div class="bname">e-Markeed · Leads → Negocio</div>
         <div class="bar-track"><div class="bar-fill" id="mql-bar-em" style="width:0%;background:#7E22CE;"></div></div>
         <div class="bpct" id="mql-pct-em">—</div>
         <div class="bamt" id="mql-amt-em">—</div>
@@ -881,6 +881,8 @@ function recalc(){
   if(cardSub) cardSub.textContent = prodLabel;
 
   set("av-card-pres",fmtMXN(aTP));set("av-card-gasto",fmtMXN(aTG));set("av-card-leads",aTL);set("av-card-cierres",aTC);
+  const cierresRealAv=data.totalCierresAverix||0;
+  set("av-card-cpa",cierresRealAv>0?"CPA "+cell(safeDiv(aTG,cierresRealAv)):"CPA — (sin cierres ganados)");
   set("av-card-cpl","CPL "+cell(safeDiv(aTG,aTL)));
   const dA=aTG-aTP,sA=dA>=0?"+":"−";
   set("av-card-vs",sA+fmtMXN0(Math.abs(dA))+" vs presupuesto");
@@ -900,6 +902,8 @@ function recalc(){
   set("em-ma-cpl",cell(safeDiv(em.gasto,em.leads)));set("em-ma-cpn",cell(safeDiv(em.gasto,em.neg)));set("em-ma-cpa",cell(safeDiv(em.gasto,em.cierres)));
   drawDonut("donut-em","legend-em",data.emMetaActivas,em.gasto,PAL_EM);buildDist("em-dist",data.emMetaActivas,em.gasto,PAL_EM);
   set("em-card-pres",fmtMXN(pME));set("em-card-gasto",fmtMXN(em.gasto));set("em-card-leads",em.leads);set("em-card-cierres",em.cierres);
+  const cierresRealEm=data.totalCierresEmk||0;
+  set("em-card-cpa",cierresRealEm>0?"CPA "+cell(safeDiv(em.gasto,cierresRealEm)):"CPA — (sin cierres ganados)");
   set("em-card-cpl","CPL "+cell(safeDiv(em.gasto,em.leads)));
   const dE=em.gasto-pME,sE=dE>=0?"+":"−";
   set("em-card-vs",sE+fmtMXN0(Math.abs(dE))+" vs presupuesto");
@@ -918,6 +922,16 @@ function recalc(){
   set("co-leads-sub",`${aTL} Averix · ${em.leads} e-Markeed`);
   set("co-negocios-sub",`${data.totalNegociosAverix||0} Averix · ${data.totalNegociosEmk||0} e-Markeed`);
   set("co-cierres-sub",`${data.totalCierresAverix||0} Averix · ${data.totalCierresEmk||0} e-Markeed`);
+
+  // Conversión Leads totales → Negocio Creado (mismos totales que las tarjetas de arriba)
+  const negAv=data.totalNegociosAverix||0, negEm=data.totalNegociosEmk||0;
+  const pctAv=aTL>0?negAv/aTL*100:0, pctEm=em.leads>0?negEm/em.leads*100:0;
+  document.getElementById("mql-bar-av").style.width=Math.min(pctAv,100)+"%";
+  document.getElementById("mql-pct-av").textContent=aTL>0?fmtPct(pctAv):"—";
+  document.getElementById("mql-amt-av").textContent=`${negAv} de ${aTL} leads`;
+  document.getElementById("mql-bar-em").style.width=Math.min(pctEm,100)+"%";
+  document.getElementById("mql-pct-em").textContent=em.leads>0?fmtPct(pctEm):"—";
+  document.getElementById("mql-amt-em").textContent=`${negEm} de ${em.leads} leads`;
 
   // Panel de resumen general (arriba de la página)
   set("sum-gasto",fmtMXN(cG));set("sum-leads",cL);set("sum-negocios",cN);set("sum-cierres",cC);
@@ -1059,15 +1073,6 @@ async function sincronizar(){
     buildActivas("#tblEmMetaActivas tbody",data.emMetaActivas,"emMetaActivas");
     buildPausadas("#tblEmMetaPausadas tbody",data.emMetaPausadas,"emMetaPausadas");
     buildGoogle(data.avGoogle);attachInputs();recalc();
-    const mqlAv=d.totales?.averix?.MQL||0, sqlAv=d.totales?.averix?.SQL||0;
-    const mqlEm=d.totales?.emk?.MQL||0, sqlEm=d.totales?.emk?.SQL||0;
-    const pctAv=mqlAv>0?(sqlAv/mqlAv*100):0, pctEm=mqlEm>0?(sqlEm/mqlEm*100):0;
-    document.getElementById("mql-bar-av").style.width=Math.min(pctAv,100)+"%";
-    document.getElementById("mql-pct-av").textContent=mqlAv>0?fmtPct(pctAv):"—";
-    document.getElementById("mql-amt-av").textContent=`${sqlAv} de ${mqlAv} MQL`;
-    document.getElementById("mql-bar-em").style.width=Math.min(pctEm,100)+"%";
-    document.getElementById("mql-pct-em").textContent=mqlEm>0?fmtPct(pctEm):"—";
-    document.getElementById("mql-amt-em").textContent=`${sqlEm} de ${mqlEm} MQL`;
     const orgAv=d.organico?.averix||{home:0,contacto:0}, orgEm=d.organico?.emk||{home:0,contacto:0};
     set("av-org-home",orgAv.home);set("av-org-contacto",orgAv.contacto);set("av-org-total",orgAv.home+orgAv.contacto);
     set("em-org-home",orgEm.home);set("em-org-contacto",orgEm.contacto);set("em-org-total",orgEm.home+orgEm.contacto);
@@ -1085,8 +1090,6 @@ async function sincronizar(){
     buildActivas("#tblEmMetaActivas tbody",[]);buildPausadas("#tblEmMetaPausadas tbody",[]);
     buildGoogle(data.avGoogle);attachInputs();recalc();
     ["av-org-home","av-org-contacto","av-org-total","em-org-home","em-org-contacto","em-org-total","org-tot-home","org-tot-contacto","org-tot-total"].forEach(id=>set(id,0));
-    document.getElementById("mql-bar-av").style.width="0%";document.getElementById("mql-pct-av").textContent="—";document.getElementById("mql-amt-av").textContent="—";
-    document.getElementById("mql-bar-em").style.width="0%";document.getElementById("mql-pct-em").textContent="—";document.getElementById("mql-amt-em").textContent="—";
     showStatus("warn",err.message);
   }
   btn.disabled=false;
@@ -1289,6 +1292,15 @@ function resetData(){
 }
 
 // ══ INIT ══
+// Periodo por defecto: siempre "mes en curso" — día 1 del mes actual a hoy
+(function setPeriodoPorDefecto(){
+  const hoy=new Date();
+  const primerDiaMes=new Date(hoy.getFullYear(),hoy.getMonth(),1);
+  const toISO=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  document.getElementById("fecha-inicio").value=toISO(primerDiaMes);
+  document.getElementById("fecha-fin").value=toISO(hoy);
+})();
+
 loadHistorial();
 sincronizar();
 </script>
