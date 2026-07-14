@@ -188,10 +188,10 @@ async function getGoogleLeads(fi, ff, token) {
       filterGroups: [{
         filters: [
           { propertyName: "createdate", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
-          { propertyName: "hs_analytics_source", operator: "EQ", value: "PAID_SEARCH" },
+          { propertyName: "fuente_mkt", operator: "EQ", value: "GOOGLE" },
         ],
       }],
-      properties: ["hs_latest_source_data_2", "hs_analytics_source"],
+      properties: ["hs_latest_source_data_2", "hs_analytics_source", "fuente_mkt"],
       limit: 200,
       ...(after ? { after } : {}),
     };
@@ -363,7 +363,7 @@ async function getContactsBatch(contactIds, token, debug) {
     const chunk = idsUnicos.slice(i, i + chunkSize);
     const body = {
       inputs: chunk.map(id => ({ id: String(id) })),
-      properties: ["empresa_interna", "hs_latest_source_data_2", "hs_analytics_source"],
+      properties: ["empresa_interna", "hs_latest_source_data_2", "hs_analytics_source", "fuente_mkt"],
     };
     const { status, body: data } = await hsRequest("/crm/v3/objects/contacts/batch/read", "POST", body, token);
     statusCodes.push(status);
@@ -420,7 +420,7 @@ async function calcularNegocios(fi, ff, token, debug) {
     if (cuenta !== "averix" && cuenta !== "emk") continue;
 
     resultado[cuenta]++;
-    if (cuenta === "averix" && p.hs_analytics_source === "PAID_SEARCH") resultado.averixGoogle++;
+    if (cuenta === "averix" && p.fuente_mkt === "GOOGLE") resultado.averixGoogle++;
 
     const campNorm = String(p.hs_latest_source_data_2 || "").toLowerCase().trim();
     if (campNorm) {
@@ -458,7 +458,7 @@ async function calcularCierres(fi, ff, token, debug) {
     if (cuenta !== "averix" && cuenta !== "emk") continue;
 
     resultado[cuenta]++;
-    if (cuenta === "averix" && contacto.hs_analytics_source === "PAID_SEARCH") resultado.averixGoogle++;
+    if (cuenta === "averix" && contacto.fuente_mkt === "GOOGLE") resultado.averixGoogle++;
 
     const campNorm = String(contacto.hs_latest_source_data_2 || "").toLowerCase().trim();
     if (campNorm) {
