@@ -14,7 +14,7 @@ function httpsGet(url) {
   });
 }
 
-function hsRequest(path, method, payload, token) {
+function hsRequestOnce(path, method, payload, token) {
   return new Promise((resolve, reject) => {
     const data = payload ? JSON.stringify(payload) : undefined;
     const headers = {
@@ -32,14 +32,38 @@ function hsRequest(path, method, payload, token) {
       let raw = "";
       res.on("data", c => raw += c);
       res.on("end", () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(raw || "{}") }); }
-        catch (e) { resolve({ status: res.statusCode, body: {} }); }
+        try { resolve({ status: res.statusCode, body: JSON.parse(raw || "{}"), headers: res.headers }); }
+        catch (e) { resolve({ status: res.statusCode, body: {}, headers: res.headers }); }
       });
     });
     req.on("error", reject);
     if (data) req.write(data);
     req.end();
   });
+}
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+// Reintenta automáticamente en 429 (rate limit) y 502/503/504 (errores transitorios del servidor).
+// No reintenta 403/401 (permisos) ni 400 (payload inválido) — esos no se arreglan reintentando.
+async function hsRequest(path, method, payload, token, intentos = 4) {
+  let ultimoResultado;
+  for (let intento = 0; intento < intentos; intento++) {
+    const resultado = await hsRequestOnce(path, method, payload, token);
+    ultimoResultado = resultado;
+
+    const debeReintentar = resultado.status === 429 || resultado.status === 502 || resultado.status === 503 || resultado.status === 504;
+    if (!debeReintentar) return resultado;
+    if (intento === intentos - 1) break;
+
+    const retryAfterHeader = resultado.headers?.["retry-after"];
+    const esperaMs = retryAfterHeader
+      ? parseFloat(retryAfterHeader) * 1000
+      : Math.min(500 * Math.pow(2, intento), 4000); // 500ms, 1s, 2s, 4s
+
+    await sleep(esperaMs);
+  }
+  return ultimoResultado;
 }
 
 const hsPost = (body, token) => hsRequest("/crm/v3/objects/contacts/search", "POST", body, token);
@@ -251,49 +275,6 @@ async function calcularMqlToSql(fi, ff, token, debug) {
 
   if (debug) debug.mqlSqlSearchStatus = statusCodes;
   if (debug) debug.totalContactosEntraronASQLEnPeriodo = contactos.length;
-
-  for (const c of contactos) {
-    const p = c.properties || {};
-    const cuenta = getCuentaFromEmpresaInterna(p.empresa_interna);
-    if (cuenta === "averix") resultado.averix++;
-    else if (cuenta === "emk") resultado.emk++;
-  }
-
-  return resultado;
-}
-
-// ── NUEVO: MQL totales del periodo (entradas a la etapa MQL, sin importar si ya avanzaron a SQL) ──
-async function calcularMqlTotal(fi, ff, token, debug) {
-  const tsFi = new Date(`${fi}T00:00:00.000Z`).getTime();
-  const tsFf = new Date(`${ff}T23:59:59.999Z`).getTime();
-  const resultado = { averix: 0, emk: 0 };
-  const contactos = [];
-  let after;
-  const statusCodes = [];
-
-  do {
-    const body = {
-      filterGroups: [{
-        filters: [
-          { propertyName: "hs_v2_date_entered_marketingqualifiedlead", operator: "BETWEEN", value: String(tsFi), highValue: String(tsFf) },
-        ],
-      }],
-      properties: ["empresa_interna", "hs_v2_date_entered_marketingqualifiedlead"],
-      limit: 200,
-      ...(after ? { after } : {}),
-    };
-    const { status, body: data } = await hsPost(body, token);
-    statusCodes.push(status);
-    if (status !== 200) break;
-
-    contactos.push(...(data.results ?? []));
-    after = data.paging?.next?.after;
-  } while (after);
-
-  if (debug) {
-    debug.mqlTotalSearchStatus = statusCodes;
-    debug.totalContactosEntraronAMqlEnPeriodo = contactos.length;
-  }
 
   for (const c of contactos) {
     const p = c.properties || {};
@@ -605,10 +586,6 @@ module.exports = async function handler(req, res) {
       const mqlSql = await calcularMqlToSql(fi, ff, HS_TOKEN, debug);
       resultado.averix.MQLtoSQL = mqlSql.averix;
       resultado.emk.MQLtoSQL = mqlSql.emk;
-
-      const mqlTotal = await calcularMqlTotal(fi, ff, HS_TOKEN, debug);
-      resultado.averix.MQL = mqlTotal.averix;
-      resultado.emk.MQL = mqlTotal.emk;
       resultado.fuente.mql_sql = "HubSpot lifecycle stages ✅";
 
       // Negocios: contactos con Estatus del Lead = "Negocio Creado" (validado 1:1 contra HubSpot)
@@ -649,8 +626,6 @@ module.exports = async function handler(req, res) {
       averix: {
         Meta: totalAvMeta,
         Google: resultado.averix.Google,
-        MQL: resultado.averix.MQL,
-        SQL: resultado.averix.MQLtoSQL,
         MQLtoSQL: resultado.averix.MQLtoSQL,
         Negocios: resultado.averix.Negocios,
         Cierres: resultado.averix.Cierres,
@@ -660,8 +635,6 @@ module.exports = async function handler(req, res) {
       emk: {
         Meta: totalEmMeta,
         Google: 0,
-        MQL: resultado.emk.MQL,
-        SQL: resultado.emk.MQLtoSQL,
         MQLtoSQL: resultado.emk.MQLtoSQL,
         Negocios: resultado.emk.Negocios,
         Cierres: resultado.emk.Cierres,
